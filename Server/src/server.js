@@ -1,10 +1,20 @@
 const express = require('express')
 const cors = require('cors')
 const routes = require('./routes')
+const ngrok = require('ngrok')
 
 require('dotenv').config()
 
 const port = 3000;
+
+async function connectNgrok() {
+  let url = await ngrok.connect({
+    proto: 'http',
+    port: port,
+  });
+
+  console.log('Ngrok connected, URL: ' + url);
+}
 
 async function serve() {
   const app = express()
@@ -20,6 +30,9 @@ async function serve() {
 
   const server = app.listen(port, () => {
     console.log(`Verify Server app listening at http://localhost:${port}`)
+    console.log('Starting Ngrok now')
+
+    connectNgrok()
   })
 
   return {
