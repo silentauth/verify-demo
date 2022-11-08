@@ -7,8 +7,8 @@ import {
   TextInput,
 } from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import RNSecureKeyStore, {ACCESSIBLE} from 'react-native-secure-key-store';
 import {SERVER_BASE_URL} from '@env';
 
 const VerifyScreen = ({
@@ -30,22 +30,16 @@ const VerifyScreen = ({
     });
 
     const data = await response.json();
-    console.log(data);
 
     if (response.status === 200) {
       console.log('Verified! Go to Secure Page!!');
 
-      RNSecureKeyStore.set('auth', data.token, {
-        accessible: ACCESSIBLE.ALWAYS_THIS_DEVICE_ONLY,
-      }).then(
-        res => {
-          console.log(res);
-          navigation.navigate('Secure');
-        },
-        err => {
-          console.log(err);
-        },
-      );
+      try {
+        await AsyncStorage.setItem('@auth', data.token);
+        navigation.navigate('Secure');
+      } catch (e) {
+        console.log(e);
+      }
     }
   };
 

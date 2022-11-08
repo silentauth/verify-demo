@@ -253,7 +253,6 @@ dependencies {
 
     //noinspection GradleDynamicVersion
     implementation "com.facebook.react:react-native:+"  //
-    implementation project(':react-native-secure-key-store')
 
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.0.0"
 

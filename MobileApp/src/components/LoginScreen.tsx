@@ -3,7 +3,6 @@ import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 
 import PhoneInput from 'react-native-phone-number-input';
-import RNSecureKeyStore, {ACCESSIBLE} from 'react-native-secure-key-store';
 import {SERVER_BASE_URL} from '@env';
 
 const LoginScreen = ({
@@ -31,13 +30,12 @@ const LoginScreen = ({
     onScreenLoad();
   });
 
-  const registerHandler = async () => {
+  const loginHandler = async () => {
     if (countryCode === '') {
       setCountryCode('GB');
     }
 
     const body = {phone_number: formattedValue, country_code: countryCode};
-
     const response = await fetch(`${SERVER_BASE_URL}/login`, {
       method: 'POST',
       body: JSON.stringify(body),
@@ -45,7 +43,6 @@ const LoginScreen = ({
         'Content-Type': 'application/json',
       },
     });
-
     const data = await response.json();
 
     if (response.status === 200) {
@@ -78,29 +75,10 @@ const LoginScreen = ({
         onChangeCountry={text => {
           setCountryCode(text.cca2);
           console.log(countryCode);
-          RNSecureKeyStore.set('auth', text.cca2, {
-            accessible: ACCESSIBLE.ALWAYS_THIS_DEVICE_ONLY,
-          }).then(
-            res => {
-              console.log(res);
-            },
-            err => {
-              console.log(err);
-            },
-          );
-
-          RNSecureKeyStore.get('auth').then(
-            res => {
-              console.log(res);
-            },
-            err => {
-              console.log(err);
-            },
-          );
         }}
       />
 
-      <TouchableOpacity onPress={registerHandler} style={styles.button}>
+      <TouchableOpacity onPress={loginHandler} style={styles.button}>
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
     </View>

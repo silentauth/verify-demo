@@ -1,14 +1,21 @@
 import React, {useState, useEffect} from 'react';
 import {TouchableOpacity, View, Text, StyleSheet} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
-import RNSecureKeyStore from 'react-native-secure-key-store';
 import {SERVER_BASE_URL} from '@env';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SecureScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
   const [phoneNumber, setPhoneNumber] = useState('');
 
   const onScreenLoad = async () => {
-    const token = await RNSecureKeyStore.get('auth');
+    var token;
+
+    try {
+      token = await AsyncStorage.getItem('@auth');
+    } catch (e) {
+      console.log(e);
+      navigation.navigate('Login');
+    }
 
     if (token) {
       const response = await fetch(`${SERVER_BASE_URL}/secured-page`, {
@@ -37,7 +44,12 @@ const SecureScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
 
   const logoutHandler = async () => {
     // This is the place to unset everything!!
-    await RNSecureKeyStore.remove('auth');
+    try {
+      await AsyncStorage.removeItem('@auth');
+    } catch (e) {
+      console.log(e);
+    }
+
     navigation.navigate('Login');
   };
 

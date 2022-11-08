@@ -3,7 +3,6 @@ import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 
 import PhoneInput from 'react-native-phone-number-input';
-import RNSecureKeyStore, {ACCESSIBLE} from 'react-native-secure-key-store';
 import {SERVER_BASE_URL} from '@env';
 
 const RegisterScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
@@ -59,25 +58,6 @@ const RegisterScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
         onChangeCountry={text => {
           setCountryCode(text.cca2);
           console.log(countryCode);
-          RNSecureKeyStore.set('auth', text.cca2, {
-            accessible: ACCESSIBLE.ALWAYS_THIS_DEVICE_ONLY,
-          }).then(
-            res => {
-              console.log(res);
-            },
-            err => {
-              console.log(err);
-            },
-          );
-
-          RNSecureKeyStore.get('auth').then(
-            res => {
-              console.log(res);
-            },
-            err => {
-              console.log(err);
-            },
-          );
         }}
       />
 

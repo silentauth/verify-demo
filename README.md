@@ -8,6 +8,7 @@ You'll need a [Vonage developer account](https://dashboard.nexmo.com/), with an 
 cd Server
 npm install
 cp .env.example .env
+npx sequelize-cli db:migrate  # This example uses SQLite3. This command will create the sqlite3 database file, and run any migrations.
 ```
 
 Run the server with the following command:
