@@ -24,6 +24,7 @@ Install all third party libraries, copy the `.env.example` file to `.env` and up
 ```bash
 cd MobileApp
 npm install
+cd ios && pod install # For ios devices.
 cp .env.example .env
 ```
 
