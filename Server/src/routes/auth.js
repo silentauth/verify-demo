@@ -21,27 +21,27 @@ async function register(req, res) {
 
   if (!phone_number || !country_code) {
     res.status(400).json({ message: "A Phone number, or country code has not be submitted" })
+
+    return
   }
 
-  console.log()
 
   const parsedPhoneNumber = parsePhoneNumber(phone_number, country_code)
 
   if (parsedPhoneNumber && parsedPhoneNumber.isValid()) {
     const existingUser = await db.User.findOne({ where: { parsed_phone_number: parsedPhoneNumber.number } })
+    var user = ''
 
-    if (existingUser) {
-      // User already exists.. redirect to login
-      res.status(400).json({ message: 'User already exists' })
-      return;
+    if (!existingUser) {
+      // Create User in DB
+      user = await db.User.create({
+        parsed_phone_number: parsedPhoneNumber.number,
+        phone_number: parsedPhoneNumber.nationalNumber,
+        country_code: country_code
+      })
+    } else {
+      user = existingUser
     }
-
-    // Create User in DB
-    const user = await db.User.create({
-      parsed_phone_number: parsedPhoneNumber.number,
-      phone_number: parsedPhoneNumber.nationalNumber,
-      country_code: country_code
-    })
 
     // Submit Verification Request.
     createVonageCreds().verify.request({
@@ -131,7 +131,7 @@ async function verify(req, res) {
 
   if (!user) {
     // User already exists.. redirect to register
-      res.sendStatus(404)
+    res.sendStatus(404)
 
     return;
   }
