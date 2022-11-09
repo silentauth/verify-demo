@@ -46,7 +46,7 @@ async function register(req, res) {
     createVonageCreds().verify.request({
       number: parsedPhoneNumber.number,
       brand: process.env.BRAND_NAME,
-      workflow_id: 6
+      workflow_id: process.env.VONAGE_VERIFY_WORKFLOW
     }, (err, result) => {
       if (err) {
         res.status(500).json({ error:  'Server Error' })
@@ -81,19 +81,21 @@ async function login(req, res) {
   const parsedPhoneNumber = parsePhoneNumber(phone_number, country_code)
 
   if (parsedPhoneNumber && parsedPhoneNumber.isValid()) {
-    const user = await db.User.findOne({ where: { parsed_phone_number: parsedPhoneNumber.number } })
+    var user = await db.User.findOne({ where: { parsed_phone_number: parsedPhoneNumber.number } })
 
     if (!user) {
-      // User already exists.. redirect to register
-      res.sendStatus(404)
-
-      return
+      // User doesn't exist, create one!
+      user = await db.User.create({
+        parsed_phone_number: parsedPhoneNumber.number,
+        phone_number: parsedPhoneNumber.nationalNumber,
+        country_code: country_code
+      })
     }
 
     createVonageCreds().verify.request({
       number: parsedPhoneNumber.number,
       brand: process.env.BRAND_NAME,
-      workflow_id: 6
+      workflow_id: process.env.VONAGE_VERIFY_WORKFLOW
     }, (err, result) => {
       if (err) {
         res.status(500).json({ error:  'Server Error' })
@@ -160,6 +162,13 @@ async function verify(req, res) {
   });
 }
 
+function device(req, res) {
+  const deviceId = req.query.deviceId;
+  const jwt = createJWT(deviceId, 'device-verify')
+
+  res.status(200).json({ token: jwt })
+}
+
 async function cancelVerify(req, res) {
   const { phone_number, country_code } = req.body;
 
@@ -199,6 +208,7 @@ async function cancelVerify(req, res) {
 }
 
 module.exports = {
+  device,
   register,
   login,
   verify,
