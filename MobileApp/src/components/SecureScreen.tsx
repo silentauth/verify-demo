@@ -3,6 +3,7 @@ import {TouchableOpacity, View, Text, StyleSheet} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import {SERVER_BASE_URL} from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {getDeviceToken} from '../utils/deviceUtil';
 
 const SecureScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -18,11 +19,14 @@ const SecureScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
     }
 
     if (token) {
+      const deviceToken = await getDeviceToken();
       const response = await fetch(`${SERVER_BASE_URL}/secured-page`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
+          'silent-auth': deviceToken.token,
+          'device-id': deviceToken.deviceId,
         },
       });
 

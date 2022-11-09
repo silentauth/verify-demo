@@ -1,29 +1,61 @@
 // screens/Home.js
-import React, {Component} from 'react';
+import React, {useEffect} from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {getUniqueId} from 'react-native-device-info';
+import {SERVER_BASE_URL} from '@env';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Props {
   navigation: any;
 }
 
-class HomeScreen extends Component<Props> {
-  render() {
-    return (
-      <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-        <Text style={styles.heading}>Welcome to the Demo Application</Text>
-        <TouchableOpacity
-          onPress={() => this.props.navigation.navigate('Login')}
-          style={styles.button}>
-          <Text style={styles.buttonText}>Login</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => this.props.navigation.navigate('Register')}
-          style={styles.button}>
-          <Text style={styles.buttonText}>Register</Text>
-        </TouchableOpacity>
-      </View>
-    );
+async function createDeviceToken() {
+  const deviceId = await getUniqueId();
+
+  const response = await fetch(
+    `${SERVER_BASE_URL}/device?deviceId=${deviceId}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    },
+  );
+  const data = await response.json();
+
+  if (data.token !== 'undefined') {
+    try {
+      await AsyncStorage.setItem('@device', data.token);
+    } catch (e) {
+      console.log(e);
+    }
   }
+}
+
+function HomeScreen({navigation}: Props) {
+  const onScreenLoad = async () => {
+    createDeviceToken();
+  };
+
+  useEffect(() => {
+    onScreenLoad();
+  });
+
+  return (
+    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+      <Text style={styles.heading}>Welcome to the Demo Application</Text>
+      <TouchableOpacity
+        onPress={() => navigation.navigate('Login')}
+        style={styles.button}>
+        <Text style={styles.buttonText}>Login</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => navigation.navigate('Register')}
+        style={styles.button}>
+        <Text style={styles.buttonText}>Register</Text>
+      </TouchableOpacity>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

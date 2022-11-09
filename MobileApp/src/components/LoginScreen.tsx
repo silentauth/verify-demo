@@ -3,12 +3,10 @@ import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 
 import PhoneInput from 'react-native-phone-number-input';
+import {getDeviceToken} from '../utils/deviceUtil';
 import {SERVER_BASE_URL} from '@env';
 
-const LoginScreen = ({
-  navigation,
-  route,
-}: StackScreenProps<{HomeScreen: any}>) => {
+const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
   const [value, setValue] = useState('');
   const [formattedValue, setFormattedValue] = useState('');
   const [countryCode, setCountryCode] = useState('GB');
@@ -16,31 +14,25 @@ const LoginScreen = ({
 
   const phoneInput = useRef<PhoneInput>(null);
 
-  const onScreenLoad = async () => {
-    if (
-      route?.params?.userExists !== null &&
-      route?.params?.userExists !== undefined
-    ) {
-      console.log(route?.params?.userExists);
-      setErrorMessage(route?.params?.userExists);
-    }
-  };
-
-  useEffect(() => {
-    onScreenLoad();
-  });
-
   const loginHandler = async () => {
     if (countryCode === '') {
       setCountryCode('GB');
     }
 
+    const deviceToken = await getDeviceToken();
+
+    console.log({
+      'silent-auth': deviceToken.token,
+      'device-id': deviceToken.deviceId,
+    });
     const body = {phone_number: formattedValue, country_code: countryCode};
     const response = await fetch(`${SERVER_BASE_URL}/login`, {
       method: 'POST',
       body: JSON.stringify(body),
       headers: {
         'Content-Type': 'application/json',
+        'silent-auth': deviceToken?.token,
+        'device-id': deviceToken?.deviceId,
       },
     });
     const data = await response.json();

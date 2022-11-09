@@ -3,6 +3,7 @@ import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 
 import PhoneInput from 'react-native-phone-number-input';
+import {getDeviceToken} from '../utils/deviceUtil';
 import {SERVER_BASE_URL} from '@env';
 
 const RegisterScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
@@ -17,6 +18,7 @@ const RegisterScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
       setCountryCode('GB');
     }
 
+    const deviceToken = await getDeviceToken();
     const body = {phone_number: formattedValue, country_code: countryCode};
 
     const response = await fetch(`${SERVER_BASE_URL}/register`, {
@@ -24,6 +26,8 @@ const RegisterScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
       body: JSON.stringify(body),
       headers: {
         'Content-Type': 'application/json',
+        'silent-auth': deviceToken.token,
+        'device-id': deviceToken.deviceId,
       },
     });
 

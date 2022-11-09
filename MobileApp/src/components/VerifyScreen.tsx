@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {getDeviceToken} from '../utils/deviceUtil';
 
 import {SERVER_BASE_URL} from '@env';
 
@@ -20,12 +21,15 @@ const VerifyScreen = ({
   const verifyHandler = async () => {
     const body = {request_id: route?.params?.requestId, pin: pin};
     console.log(body);
+    const deviceToken = await getDeviceToken();
 
     const response = await fetch(`${SERVER_BASE_URL}/verify`, {
       method: 'POST',
       body: JSON.stringify(body),
       headers: {
         'Content-Type': 'application/json',
+        'silent-auth': deviceToken.token,
+        'device-id': deviceToken.deviceId,
       },
     });
 
