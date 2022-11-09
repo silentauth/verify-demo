@@ -25,7 +25,6 @@ async function register(req, res) {
     return
   }
 
-
   const parsedPhoneNumber = parsePhoneNumber(phone_number, country_code)
 
   if (parsedPhoneNumber && parsedPhoneNumber.isValid()) {
@@ -123,8 +122,9 @@ async function verify(req, res) {
   const { request_id, pin } = req.body
 
   if (!request_id || !pin) {
-    console.log('one isn\'t true')
-    // Return error
+    res.status(400).json({ message: "A `request_id` or `pin` was not provided." })
+
+    return
   }
 
   const user = await db.User.findOne({ where: { vonage_verify_request_id: request_id } })
@@ -149,7 +149,6 @@ async function verify(req, res) {
         user.update({ vonage_verify_request_id: null })
             
         // Create a JWT for the user
-        console.log('we creating JWT now!!')
         const jwt = createJWT(user.id)
 
         // Return the JWT
@@ -161,8 +160,47 @@ async function verify(req, res) {
   });
 }
 
+async function cancelVerify(req, res) {
+  const { phone_number, country_code } = req.body;
+
+  if (!phone_number || !country_code) {
+    res.status(400).json({ message: "A `phone_number`, or `country_code` has not be submitted" })
+
+    return
+  }
+
+  const parsedPhoneNumber = parsePhoneNumber(phone_number, country_code)
+
+  if (parsedPhoneNumber && parsedPhoneNumber.isValid()) {
+    const user = await db.User.findOne({ where: { parsed_phone_number: parsedPhoneNumber.number } })
+
+    if (!user || user.vonage_verify_request_id === null) {
+      // User already exists.. Unable to cancel verification
+      res.sendStatus(404)
+
+      return
+    }
+
+    createVonageCreds().verify.control({
+      request_id: user.vonage_verify_request_id,
+      cmd: 'cancel'
+    }, (err, result) => {
+      if (err) {
+        res.status(500).json( { error: 'Server Error' })
+
+        return;
+      } else {
+        user.update({ vonage_verify_request_id: null })
+
+        res.status(200).json({ message: 'Verification cancelled!' })
+      }
+    });
+  }
+}
+
 module.exports = {
   register,
   login,
-  verify
+  verify,
+  cancelVerify
 }
