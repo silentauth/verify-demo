@@ -17,6 +17,17 @@ Run the server with the following command:
 npm run dev # This will output an ngrok URL. Copy this for the next section.
 ```
 
+### Clearing current Verifications
+
+If you wish to clear a pending verification, a `PATCH` request to `/cancel-verify` with the following body as a JSON request will cancel this for you:
+
+```json
+{
+    "phone_number": "07588841195",
+    "country_code": "GB"
+}
+```
+
 ## Mobile App Setup
 
 Install all third party libraries, copy the `.env.example` file to `.env` and update the value of `SERVER_BASE_URL` in `.env` to be the value of your ngrok URL.
