@@ -20,7 +20,6 @@ const VerifyScreen = ({
 
   const verifyHandler = async () => {
     const body = {request_id: route?.params?.requestId, pin: pin};
-    console.log(body);
     const deviceToken = await getDeviceToken();
 
     const response = await fetch(`${SERVER_BASE_URL}/verify`, {
@@ -37,6 +36,7 @@ const VerifyScreen = ({
 
     if (response.status === 200) {
       console.log('Verified! Go to Secure Page!!');
+      setPin('');
 
       try {
         await AsyncStorage.setItem('@auth', data.token);
