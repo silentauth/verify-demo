@@ -23,7 +23,7 @@ If you wish to clear a pending verification, a `PATCH` request to `/cancel-verif
 
 ```json
 {
-    "phone_number": "07588841195",
+    "phone_number": "07000000000",
     "country_code": "GB"
 }
 ```
