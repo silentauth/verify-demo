@@ -1,20 +1,7 @@
 const { parsePhoneNumber } = require('libphonenumber-js')
-const Vonage = require('@vonage/server-sdk')
 const db = require('../models')
 const { createJWT } = require('../utils/auth')
-
-var vonage = null
-
-function createVonageCreds() {
-  if (vonage === null) {
-    vonage = new Vonage({
-      apiKey: process.env.VONAGE_API_KEY,
-      apiSecret: process.env.VONAGE_API_SECRET
-    });
-  }
-
-  return vonage
-}
+const { createRequest, verifyRequest } = require('../utils/vonage')
 
 async function register(req, res) {
   const { phone_number, country_code } = req.body;
@@ -43,27 +30,17 @@ async function register(req, res) {
     }
 
     // Submit Verification Request.
-    createVonageCreds().verify.request({
-      number: parsedPhoneNumber.number,
-      brand: process.env.BRAND_NAME,
-      workflow_id: process.env.VONAGE_VERIFY_WORKFLOW
-    }, (err, result) => {
-      if (err) {
-        res.status(500).json({ error:  'Server Error' })
-      } else {
-        let requestId = result.request_id;
-  
-        if (result.status == '0') {
-          user.update({ vonage_verify_request_id: requestId})
+    const verify = await createRequest(parsedPhoneNumber.number)
 
-          res.status(200).json({ requestId: requestId })
-        } else {
-          res.status(401).json({ error: result.error_text })
-        }
-      }
-    });
+    if (verify.status === 202) {
+      user.update({ vonage_verify_request_id: verify.body.request_id})
 
-    return
+      return res.status(200).json({ requestId: verify.body.request_id })
+    } else if (verify.status === 422) {
+      return res.status(400).json({ error: verify.body.detail})
+    } else {
+      return res.status(500).json({ error:  'Server Error' })
+    }
   } else {
     // Phone number not parseable or valid, return error
     res.status(400).json({ message: "Phone number is not valid" })
@@ -92,27 +69,19 @@ async function login(req, res) {
       })
     }
 
-    createVonageCreds().verify.request({
-      number: parsedPhoneNumber.number,
-      brand: process.env.BRAND_NAME,
-      workflow_id: process.env.VONAGE_VERIFY_WORKFLOW
-    }, (err, result) => {
-      if (err) {
-        res.status(500).json({ error:  'Server Error' })
-      } else {
-        let requestId = result.request_id;
-  
-        if (result.status == '0') {
-          user.update({ vonage_verify_request_id: requestId})
+    // Submit Verification Request.
+    const verify = await createRequest(parsedPhoneNumber.number)
 
-          res.status(200).json({ requestId: requestId })
-        } else {
-          res.status(401).json({ error: result.error_text })
-        }
-      }
-    });
+    console.log(verify);
+    if (verify.status === 202) {
+      user.update({ vonage_verify_request_id: verify.body.request_id})
 
-    return
+      return res.status(200).json({ requestId: verify.body.request_id })
+    } else if (verify.status === 422) {
+      return res.status(400).json({ error: verify.body.detail})
+    } else {
+      return res.status(500).json({ error:  'Server Error' })
+    }
   } else {
     // Phone number not parseable or valid, return error
     res.status(400).json({ message: "Phone number is not valid" })
@@ -138,28 +107,22 @@ async function verify(req, res) {
     return;
   }
 
-  createVonageCreds().verify.check({
-    request_id: request_id,
-    code: pin
-  }, (err, result) => {
-    if (err) {
-      res.status(500).json( { error: 'Server Error' })
-    } else {
-      console.log(result);
-      if (result && result.status == '0') {
-        // Clear requestId from database
-        user.update({ vonage_verify_request_id: null })
-            
-        // Create a JWT for the user
-        const jwt = createJWT(user.id)
+  const verify = await verifyRequest(request_id, pin)
 
-        // Return the JWT
-        res.status(200).json({ success: 'Account verified!', token: jwt })
-      } else {
-        res.status(401).json({ message: { error: result.error_text } })
-      }
-    }
-  });
+  if (verify.status === 200) {
+    // Clear requestId from database
+    user.update({ vonage_verify_request_id: null })
+
+    // Create a JWT for the user
+    const jwt = createJWT(user.id)
+
+    // Return the JWT
+    res.status(200).json({ success: 'Account verified!', token: jwt })
+  } else if (verify.status >= 400 && verify.status < 500) {
+    return res.status(400).json({ error: verify.body.detail})
+  } else {
+    return res.status(500).json({ error:  'Server Error' })
+  }
 }
 
 function device(req, res) {
@@ -169,42 +132,10 @@ function device(req, res) {
   res.status(200).json({ token: jwt })
 }
 
-async function cancelVerify(req, res) {
-  const { phone_number, country_code } = req.body;
-
-  if (!phone_number || !country_code) {
-    res.status(400).json({ message: "A `phone_number`, or `country_code` has not be submitted" })
-
-    return
-  }
-
-  const parsedPhoneNumber = parsePhoneNumber(phone_number, country_code)
-
-  if (parsedPhoneNumber && parsedPhoneNumber.isValid()) {
-    const user = await db.User.findOne({ where: { parsed_phone_number: parsedPhoneNumber.number } })
-
-    if (!user || user.vonage_verify_request_id === null) {
-      // User already exists.. Unable to cancel verification
-      res.sendStatus(404)
-
-      return
-    }
-
-    createVonageCreds().verify.control({
-      request_id: user.vonage_verify_request_id,
-      cmd: 'cancel'
-    }, (err, result) => {
-      if (err) {
-        res.status(500).json( { error: 'Server Error' })
-
-        return;
-      } else {
-        user.update({ vonage_verify_request_id: null })
-
-        res.status(200).json({ message: 'Verification cancelled!' })
-      }
-    });
-  }
+async function callback(req, res) {
+  console.log('--------- callback -------------')
+  console.log(req.body)
+  console.log('--------- end callback ---------')
 }
 
 module.exports = {
@@ -212,5 +143,5 @@ module.exports = {
   register,
   login,
   verify,
-  cancelVerify
+  callback
 }

@@ -2,7 +2,7 @@
 
 ## Server Setup
 
-You'll need a [Vonage developer account](https://dashboard.nexmo.com/), with an API key and secret. Run the three commands below and populate the newly created `.env` file with your Vonage credentials. The [workflow](https://developer.vonage.com/verify/guides/workflows-and-events) is default to 5 which is SMS -> TTS. However this can be defined however you wish.
+You'll need a [Vonage developer account](https://dashboard.nexmo.com/), with an application ID and the `private.key` file for this application. Run the three commands below and populate the newly created `.env` file with your Vonage credentials. The [workflow](https://developer.vonage.com/api/verify.v2#newRequest) is configured to SMS -> TTS. However this can be defined however you wish in the `./Server/src/utils/vonage.js` `createRequest` method.
 
 ```bash
 cd Server
@@ -15,17 +15,6 @@ Run the server with the following command:
 
 ```bash
 npm run dev # This will output an ngrok URL. Copy this for the next section.
-```
-
-### Clearing current Verifications
-
-If you wish to clear a pending verification, a `PATCH` request to `/cancel-verify` with the following body as a JSON request will cancel this for you:
-
-```json
-{
-    "phone_number": "07000000000",
-    "country_code": "GB"
-}
 ```
 
 ## Mobile App Setup

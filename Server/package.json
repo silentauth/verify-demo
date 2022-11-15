@@ -18,6 +18,7 @@
     "libphonenumber-js": "^1.10.14",
     "ngrok": "^4.3.3",
     "njwt": "^1.2.0",
+    "node-fetch": "^2.6.7",
     "sequelize": "^6.25.3",
     "sqlite3": "^5.1.2"
   }
