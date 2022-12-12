@@ -23,7 +23,7 @@ async function generateJWT() {
 
   // TODO: Check the claims.
   let claims = {
-    exp: Math.round(new Date().getTime() / 1000) + 120,
+    exp: Math.round(new Date().getTime() / 1000) + 86400,
     acl: {
       paths: {
         "/*/users/**": {},
@@ -50,7 +50,11 @@ async function generateJWT() {
 async function createRequest(phoneNumber) {
   const brand = process.env.BRAND_NAME
 
-  const body = {brand: brand, workflow: [{channel: "sms", to: phoneNumber}, {channel: "voice", to: phoneNumber}]};
+  const body = {brand: brand, workflow: [
+    {channel: "silent_auth", to: phoneNumber}, 
+    // {channel: "sms", to: phoneNumber}, 
+    // {channel: "voice", to: phoneNumber}
+  ]};
 
   const vonage = await getVonageCreds()
   const response = await fetch('https://api.nexmo.com/v2/verify', {
@@ -89,7 +93,38 @@ async function verifyRequest(requestId, code) {
   return { status: response.status, body: dataResponse}
 }
 
+async function statusCallback(req) {
+  const { request_id, type, channel, status, action } = req.body
+
+  if (!request_id || !type || !channel || !status || !action) {
+    return false
+  }
+
+  if (channel !== 'silent_auth' || status !== 'action_pending' || action.type !== 'check' || !action.check_url) {
+    return false
+  }
+
+  // Do the next thing!
+  return { request_id: request_id, status: status, type: action.type, check_url: action.check_url }
+}
+
+async function completeCallback(req) {
+  const { request_id, type, channel, status } = req.body
+
+  if (!request_id || !type || !channel || !status) {
+    return false
+  }
+
+  if (channel !== 'silent_auth') {
+    return false
+  }
+
+  return { request_id: request_id, status: status }
+}
+
 module.exports = {
   createRequest,
-  verifyRequest
+  verifyRequest,
+  statusCallback,
+  completeCallback
 };

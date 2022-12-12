@@ -1,10 +1,15 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 
 import PhoneInput from 'react-native-phone-number-input';
 import {getDeviceToken} from '../utils/deviceUtil';
 import {SERVER_BASE_URL} from '@env';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import SilentAuthSdkReactNative, {
+  CheckResponse,
+} from '@silentauth/silentauth-sdk-react-native';
 
 const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
   const [value, setValue] = useState('');
@@ -14,17 +19,101 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
 
   const phoneInput = useRef<PhoneInput>(null);
 
+  const getCheckResults = async (requestId: string) => {
+    const deviceToken = await getDeviceToken();
+
+    let interval = setInterval(async () => {
+      var checkResponse;
+      var checkResponseData;
+
+      checkResponse = await fetch(
+        `${SERVER_BASE_URL}/check-silent-auth-status?request_id=${requestId}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'silent-auth': deviceToken?.token,
+            'device-id': deviceToken?.deviceId,
+          },
+        },
+      );
+
+      if (checkResponse.status === 200) {
+        checkResponseData = await checkResponse.json();
+
+        if ('token' in checkResponseData) {
+          clearInterval(interval);
+
+          try {
+            await AsyncStorage.setItem('@auth', checkResponseData.token);
+            navigation.navigate('Secure');
+          } catch (e) {
+            setErrorMessage('Unexpected Error. Unable to log in.');
+          }
+        }
+      } else if (checkResponse.status === 401) {
+        clearInterval(interval);
+        setErrorMessage('Phone number not a match.');
+      } else {
+        clearInterval(interval);
+        setErrorMessage('Unexpected error occured.');
+      }
+    }, 3000);
+  };
+
+  const getCheckUrlFromApi = async (requestId: string) => {
+    const deviceToken = await getDeviceToken();
+
+    let interval = setInterval(async () => {
+      var checkUrlResponse;
+      var checkUrlResponseData;
+
+      checkUrlResponse = await fetch(
+        `${SERVER_BASE_URL}/get-check-url?request_id=${requestId}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'silent-auth': deviceToken?.token,
+            'device-id': deviceToken?.deviceId,
+          },
+        },
+      );
+      checkUrlResponseData = await checkUrlResponse.json();
+
+      if (checkUrlResponse.status === 200 && checkUrlResponseData.check_url) {
+        clearInterval(interval);
+
+        const resp =
+          await SilentAuthSdkReactNative.openWithDataCellular<CheckResponse>(
+            checkUrlResponseData.check_url,
+          );
+
+        if ('error' in resp) {
+          setErrorMessage('Unexpected error occured');
+        } else if ('http_status' in resp) {
+          const httpStatus = resp.http_status;
+
+          if (httpStatus >= 200) {
+            await getCheckResults(requestId);
+          } else {
+            navigation.navigate('Verify', {requestId: requestId});
+          }
+        }
+      }
+    }, 3000);
+  };
+
   const loginHandler = async () => {
+    setErrorMessage('');
+
     if (countryCode === '') {
       setCountryCode('GB');
     }
 
     const deviceToken = await getDeviceToken();
 
-    console.log({
-      'silent-auth': deviceToken.token,
-      'device-id': deviceToken.deviceId,
-    });
+    // Step 1 - Make POST to /login
     const body = {phone_number: formattedValue, country_code: countryCode};
     const response = await fetch(`${SERVER_BASE_URL}/login`, {
       method: 'POST',
@@ -38,10 +127,9 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
     const data = await response.json();
 
     if (response.status === 200) {
-      console.log('Verification Sent!!');
-      navigation.navigate('Verify', {requestId: data.requestId});
+      await getCheckUrlFromApi(data.requestId);
     } else {
-      setErrorMessage(data.error);
+      setErrorMessage(data.message);
     }
   };
 
@@ -57,16 +145,13 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
         defaultValue={value}
         defaultCode="GB"
         onChangeText={text => {
-          console.log(text);
           setValue(text);
         }}
         onChangeFormattedText={text => {
-          console.log(text);
           setFormattedValue(text);
         }}
         onChangeCountry={text => {
           setCountryCode(text.cca2);
-          console.log(countryCode);
         }}
       />
 

@@ -17,7 +17,9 @@ module.exports = (sequelize, DataTypes) => {
     phone_number: DataTypes.STRING,
     country_code: DataTypes.STRING,
     parsed_phone_number: DataTypes.STRING,
-    vonage_verify_request_id: DataTypes.INTEGER
+    vonage_verify_request_id: DataTypes.INTEGER,
+    vonage_verify_check_url: DataTypes.STRING,
+    vonage_verify_status: DataTypes.STRING
   }, {
     sequelize,
     modelName: 'User',

@@ -1,7 +1,7 @@
 const { parsePhoneNumber } = require('libphonenumber-js')
 const db = require('../models')
 const { createJWT } = require('../utils/auth')
-const { createRequest, verifyRequest } = require('../utils/vonage')
+const vonage = require('../utils/vonage')
 
 async function register(req, res) {
   const { phone_number, country_code } = req.body;
@@ -30,7 +30,7 @@ async function register(req, res) {
     }
 
     // Submit Verification Request.
-    const verify = await createRequest(parsedPhoneNumber.number)
+    const verify = await vonage.createRequest(parsedPhoneNumber.number)
 
     if (verify.status === 202) {
       user.update({ vonage_verify_request_id: verify.body.request_id})
@@ -52,7 +52,7 @@ async function login(req, res) {
   const { phone_number, country_code } = req.body
 
   if (!phone_number || !country_code) {
-    res.status(400).json({ message: "A Phone number, or country code has not be submitted" })
+    res.status(400).json({ message: "A Phone number or country code has not be submitted" })
   }
 
   const parsedPhoneNumber = parsePhoneNumber(phone_number, country_code)
@@ -70,9 +70,8 @@ async function login(req, res) {
     }
 
     // Submit Verification Request.
-    const verify = await createRequest(parsedPhoneNumber.number)
+    const verify = await vonage.createRequest(parsedPhoneNumber.number)
 
-    console.log(verify);
     if (verify.status === 202) {
       user.update({ vonage_verify_request_id: verify.body.request_id})
 
@@ -107,7 +106,7 @@ async function verify(req, res) {
     return;
   }
 
-  const verify = await verifyRequest(request_id, pin)
+  const verify = await vonage.verifyRequest(request_id, pin)
 
   if (verify.status === 200) {
     // Clear requestId from database
@@ -133,9 +132,101 @@ function device(req, res) {
 }
 
 async function callback(req, res) {
-  console.log('--------- callback -------------')
-  console.log(req.body)
-  console.log('--------- end callback ---------')
+  if (req.body.type !== "event") {
+    return res.status(200).json({})
+  }
+
+  // Check to make sure the callback is the initial callback for a `silent_auth` with 
+  // status: `pending`, and contains an action with type `check` and a `check_url`
+  const statusCallback = await vonage.statusCallback(req)
+
+  if (statusCallback !== false) {
+    const user = await db.User.findOne({ where: { vonage_verify_request_id: statusCallback.request_id } })
+
+    if (!user) {
+      // No user found, return false
+      return res.status(200).json({})
+    }
+
+    user.update({ vonage_verify_check_url: statusCallback.check_url, vonage_verify_status: statusCallback.status })
+
+    return res.status(200).json({})
+  }
+
+  // Check to make sure the callback is the status Update callback for a `silent_auth` with 
+  // status either `completed`, `user_rejected`, `failed`, or `expired`.
+  const completeCallback = await vonage.completeCallback(req)
+
+  if (completeCallback !== false) {
+    const user = await db.User.findOne({ where: { vonage_verify_request_id: completeCallback.request_id } })
+
+    if (!user) {
+      // No user found, return false
+      return res.status(200).json({})
+    }
+
+    user.update({ vonage_verify_check_url: null, vonage_verify_status: completeCallback.status })
+
+    return res.status(200).json({})
+  }
+
+  return res.status(200).json({})
+}
+
+async function getSilentAuthCheckUrl(req, res) {
+  const requestId = req.query.request_id;
+
+  if (requestId === null || requestId === undefined) {
+    return res.sendStatus(404);
+  }
+
+  // Check a user exists with this requestId
+  const user = await db.User.findOne({ where: { vonage_verify_request_id: requestId } })
+
+  if (!user) {
+    return res.sendStatus(404);
+  }
+
+  if (user.vonage_verify_status === 'action_pending' && user.vonage_verify_check_url !== null) {
+    return res.status(200).json({check_url: user.vonage_verify_check_url})
+  }
+
+  return res.status(200).json({})
+}
+
+async function checkSilentAuthStatus(req, res) {
+  const requestId = req.query.request_id;
+
+  // Check a user exists with this requestId
+  const user = await db.User.findOne({ where: { vonage_verify_request_id: requestId } })
+
+  if (!user) {
+    console.log('checkSilentAuthStatus() - No user found');
+    return res.sendStatus(404);
+  }
+
+  if (user.vonage_verify_status === 'action_pending' && user.vonage_verify_check_url !== null) {
+    console.log('checkSilentAuthStatus() - Still pending');
+    return res.status(200).json({})
+  }
+
+  if (user.vonage_verify_status === 'completed') {
+    user.update({ vonage_verify_check_url: null, vonage_verify_status: null, vonage_verify_request_id: null })
+    console.log('checkSilentAuthStatus() - Verification completed');
+    // Create a JWT for the user
+    const jwt = createJWT(user.id)
+
+    // Return the JWT
+    return res.status(200).json({ success: 'Account verified!', token: jwt })
+  } else if (user.vonage_verify_status === 'user_rejected') {
+    user.update({ vonage_verify_check_url: null, vonage_verify_status: null, vonage_verify_request_id: null })
+    console.log('checkSilentAuthStatus() - User Rejected (Not a match)');
+    return res.sendStatus(401)
+  } else {
+    user.update({ vonage_verify_check_url: null, vonage_verify_status: null, vonage_verify_request_id: null })
+    console.log('checkSilentAuthStatus() - Unexpected Error');
+    return res.sendStatus(400)
+  }
 }
 
 module.exports = {
@@ -143,5 +234,7 @@ module.exports = {
   register,
   login,
   verify,
-  callback
+  callback,
+  getSilentAuthCheckUrl,
+  checkSilentAuthStatus
 }

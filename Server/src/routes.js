@@ -1,19 +1,22 @@
 const { Router } = require('express')
 
-const { device, register, login, verify, callback } = require('./routes/auth')
-const { securedPage } = require('./routes/admin')
-const { verifyJWT, verifyDevice } = require('./utils/auth')
+const auth = require('./routes/auth')
+const admin = require('./routes/admin')
+const authUtil = require('./utils/auth')
 
 const router = Router()
 
 function routes() {
-  router.post('/register', verifyDevice, register)
-  router.post('/login', verifyDevice, login)
-  router.post('/verify', verifyDevice, verify)
-  router.get('/secured-page', verifyDevice, verifyJWT, securedPage)
-  router.post('/callback', callback)
+  router.post('/register', authUtil.verifyDevice, auth.register)
+  router.post('/login', authUtil.verifyDevice, auth.login)
+  router.post('/verify', authUtil.verifyDevice, auth.verify)
+  router.get('/secured-page', authUtil.verifyDevice, authUtil.verifyJWT, admin.securedPage)
+  router.post('/callback', auth.callback)
 
-  router.get('/device', device)
+  router.get('/get-check-url', authUtil.verifyDevice, auth.getSilentAuthCheckUrl)
+  router.get('/check-silent-auth-status', authUtil.verifyDevice, auth.checkSilentAuthStatus)
+
+  router.get('/device', auth.device)
 
   return router
 }
