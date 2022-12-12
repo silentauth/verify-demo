@@ -1,5 +1,11 @@
-import React, {useRef, useState} from 'react';
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 
 import PhoneInput from 'react-native-phone-number-input';
@@ -16,6 +22,7 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
   const [formattedValue, setFormattedValue] = useState('');
   const [countryCode, setCountryCode] = useState('GB');
   const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
   const phoneInput = useRef<PhoneInput>(null);
 
@@ -45,16 +52,20 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
           clearInterval(interval);
 
           try {
+            setIsLoading(false);
             await AsyncStorage.setItem('@auth', checkResponseData.token);
             navigation.navigate('Secure');
           } catch (e) {
+            setIsLoading(false);
             setErrorMessage('Unexpected Error. Unable to log in.');
           }
         }
       } else if (checkResponse.status === 401) {
+        setIsLoading(false);
         clearInterval(interval);
         setErrorMessage('Phone number not a match.');
       } else {
+        setIsLoading(false);
         clearInterval(interval);
         setErrorMessage('Unexpected error occured.');
       }
@@ -90,6 +101,7 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
           );
 
         if ('error' in resp) {
+          setIsLoading(false);
           setErrorMessage('Unexpected error occured');
         } else if ('http_status' in resp) {
           const httpStatus = resp.http_status;
@@ -97,6 +109,7 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
           if (httpStatus >= 200) {
             await getCheckResults(requestId);
           } else {
+            setIsLoading(false);
             navigation.navigate('Verify', {requestId: requestId});
           }
         }
@@ -106,6 +119,7 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
 
   const loginHandler = async () => {
     setErrorMessage('');
+    setIsLoading(true);
 
     if (countryCode === '') {
       setCountryCode('GB');
@@ -130,6 +144,7 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
       await getCheckUrlFromApi(data.requestId);
     } else {
       setErrorMessage(data.message);
+      setIsLoading(false);
     }
   };
 
@@ -155,9 +170,18 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
         }}
       />
 
-      <TouchableOpacity onPress={loginHandler} style={styles.button}>
-        <Text style={styles.buttonText}>Login</Text>
-      </TouchableOpacity>
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator
+            color={styles.loadingContainer.color}
+            size="large"
+          />
+        </View>
+      ) : (
+        <TouchableOpacity onPress={loginHandler} style={styles.button}>
+          <Text style={styles.buttonText}>Login</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -197,6 +221,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     marginLeft: 20,
     marginRight: 20,
+  },
+  loadingContainer: {
+    marginTop: 40,
+    justifyContent: 'center',
+    color: '#00B4FF',
   },
 });
 
