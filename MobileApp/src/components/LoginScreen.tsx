@@ -187,17 +187,22 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
 };
 
 const styles = StyleSheet.create({
+  view: {
+    flex: 1,
+    alignItems: 'center',
+    marginTop: 120,
+  },
   heading: {
     fontSize: 20,
-    marginBottom: 50,
-    marginLeft: 20,
-    marginRight: 20,
+    marginBottom: 10,
+    marginLeft: 10,
+    marginRight: 10,
   },
   subHeading: {
     fontSize: 15,
-    marginBottom: 20,
-    marginLeft: 20,
-    marginRight: 20,
+    marginBottom: 10,
+    marginLeft: 10,
+    marginRight: 10,
   },
   button: {
     alignItems: 'center',
@@ -209,7 +214,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     borderWidth: 2,
     borderColor: '#1955ff',
-    marginTop: 20,
+    marginTop: 10,
     width: '80%',
   },
   buttonText: {
