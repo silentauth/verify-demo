@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  Keyboard,
 } from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 
@@ -18,13 +19,11 @@ import SilentAuthSdkReactNative, {
 } from '@silentauth/silentauth-sdk-react-native';
 
 const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
-  const [value, setValue] = useState('');
-  const [formattedValue, setFormattedValue] = useState('');
+  const [defaultNumber, setDefaultNumber] = useState('');
+  const [inputNumber, setInputNumber] = useState('');
   const [countryCode, setCountryCode] = useState('GB');
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
-
-  const phoneInput = useRef<PhoneInput>(null);
 
   const getCheckResults = async (requestId: string) => {
     const deviceToken = await getDeviceToken();
@@ -69,7 +68,7 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
         clearInterval(interval);
         setErrorMessage('Unexpected error occured.');
       }
-    }, 3000);
+    }, 1000);
   };
 
   const getCheckUrlFromApi = async (requestId: string) => {
@@ -99,6 +98,7 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
           await SilentAuthSdkReactNative.openWithDataCellular<CheckResponse>(
             checkUrlResponseData.check_url,
           );
+        console.log(`openWithDataCellular => ${resp}`);
 
         if ('error' in resp) {
           setIsLoading(false);
@@ -118,6 +118,7 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
   };
 
   const loginHandler = async () => {
+    Keyboard.dismiss();
     setErrorMessage('');
     setIsLoading(true);
 
@@ -128,7 +129,7 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
     const deviceToken = await getDeviceToken();
 
     // Step 1 - Make POST to /login
-    const body = {phone_number: formattedValue, country_code: countryCode};
+    const body = {phone_number: inputNumber, country_code: countryCode};
     const response = await fetch(`${SERVER_BASE_URL}/login`, {
       method: 'POST',
       body: JSON.stringify(body),
@@ -149,21 +150,20 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
   };
 
   return (
-    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+    <View style={styles.view}>
       <Text style={styles.heading}>Welcome to the Demo Application</Text>
       <Text style={styles.subHeading}>
         Please enter your phone number to login.
       </Text>
       <Text style={styles.errorText}>{errorMessage}</Text>
       <PhoneInput
-        ref={phoneInput}
-        defaultValue={value}
+        defaultValue={defaultNumber}
         defaultCode="GB"
         onChangeText={text => {
-          setValue(text);
+          setInputNumber(text);
         }}
         onChangeFormattedText={text => {
-          setFormattedValue(text);
+          setInputNumber(text);
         }}
         onChangeCountry={text => {
           setCountryCode(text.cca2);
