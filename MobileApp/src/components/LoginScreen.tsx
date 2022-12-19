@@ -161,6 +161,18 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
     }
   };
 
+  const AppButton = () => (
+    <TouchableOpacity
+      onPress={loginHandler}
+      style={[
+        styles.button,
+        isPhoneNumberValidState ? styles.enabledButton : styles.disabledButton,
+      ]}
+      disabled={!isPhoneNumberValidState}>
+      <Text style={styles.buttonText}>Login</Text>
+    </TouchableOpacity>
+  );
+
   return (
     <View style={styles.view}>
       <Text style={styles.heading}>Welcome to the Demo Application</Text>
@@ -190,12 +202,7 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
           />
         </View>
       ) : (
-        <TouchableOpacity
-          onPress={loginHandler}
-          style={styles.button}
-          disabled={!isPhoneNumberValidState}>
-          <Text style={styles.buttonText}>Login</Text>
-        </TouchableOpacity>
+        <AppButton />
       )}
     </View>
   );
@@ -222,7 +229,6 @@ const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1955ff',
     color: '#fff',
     paddingVertical: 10,
     paddingHorizontal: 12,
@@ -231,6 +237,12 @@ const styles = StyleSheet.create({
     borderColor: '#1955ff',
     marginTop: 10,
     width: '80%',
+  },
+  disabledButton: {
+    backgroundColor: '#EBEBE4',
+  },
+  enabledButton: {
+    backgroundColor: '#1955ff',
   },
   buttonText: {
     color: '#fff',
