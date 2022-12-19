@@ -13,8 +13,7 @@ function routes() {
   router.get('/secured-page', authUtil.verifyDevice, authUtil.verifyJWT, admin.securedPage)
   router.post('/callback', auth.callback)
 
-  router.get('/get-check-url', authUtil.verifyDevice, auth.getSilentAuthCheckUrl)
-  router.get('/check-silent-auth-status', authUtil.verifyDevice, auth.checkSilentAuthStatus)
+  router.get('/check-status', authUtil.verifyDevice, auth.getCheckStatus)
 
   router.get('/device', auth.device)
 

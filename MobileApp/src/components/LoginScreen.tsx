@@ -45,7 +45,7 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
       var checkResponseData;
 
       checkResponse = await fetch(
-        `${SERVER_BASE_URL}/check-silent-auth-status?request_id=${requestId}`,
+        `${SERVER_BASE_URL}/check-status?request_id=${requestId}`,
         {
           method: 'GET',
           headers: {
@@ -58,7 +58,7 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
 
       if (checkResponse.status === 200) {
         checkResponseData = await checkResponse.json();
-        console.log(`Check Response: ${checkResponseData}`);
+        console.log(`Check Response: ${JSON.stringify(checkResponseData)}`);
 
         if ('token' in checkResponseData) {
           clearInterval(interval);
@@ -92,7 +92,7 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
       var checkUrlResponseData;
 
       checkUrlResponse = await fetch(
-        `${SERVER_BASE_URL}/get-check-url?request_id=${requestId}`,
+        `${SERVER_BASE_URL}/check-status?request_id=${requestId}`,
         {
           method: 'GET',
           headers: {
@@ -190,7 +190,10 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
           />
         </View>
       ) : (
-        <TouchableOpacity onPress={loginHandler} style={styles.button} disabled={!isPhoneNumberValidState}>
+        <TouchableOpacity
+          onPress={loginHandler}
+          style={styles.button}
+          disabled={!isPhoneNumberValidState}>
           <Text style={styles.buttonText}>Login</Text>
         </TouchableOpacity>
       )}

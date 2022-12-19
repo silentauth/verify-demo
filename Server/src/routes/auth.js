@@ -173,7 +173,8 @@ async function callback(req, res) {
   return res.status(200).json({})
 }
 
-async function getSilentAuthCheckUrl(req, res) {
+async function getCheckStatus(req, res) {
+  // Check request contains `request_id`
   const requestId = req.query.request_id;
 
   if (requestId === null || requestId === undefined) {
@@ -187,32 +188,14 @@ async function getSilentAuthCheckUrl(req, res) {
     return res.sendStatus(404);
   }
 
+  // If status is `action_pending`, and there is a `check_url` in the database, return this `check_url`
   if (user.vonage_verify_status === 'action_pending' && user.vonage_verify_check_url !== null) {
+    console.log('getCheckStatus() - Action pending');
+
     return res.status(200).json({check_url: user.vonage_verify_check_url})
-  }
-
-  return res.status(200).json({})
-}
-
-async function checkSilentAuthStatus(req, res) {
-  const requestId = req.query.request_id;
-
-  // Check a user exists with this requestId
-  const user = await db.User.findOne({ where: { vonage_verify_request_id: requestId } })
-
-  if (!user) {
-    console.log('checkSilentAuthStatus() - No user found');
-    return res.sendStatus(404);
-  }
-
-  if (user.vonage_verify_status === 'action_pending' && user.vonage_verify_check_url !== null) {
-    console.log('checkSilentAuthStatus() - Still pending');
-    return res.status(200).json({})
-  }
-
-  if (user.vonage_verify_status === 'completed') {
+  } else if (user.vonage_verify_status === 'completed') {
     user.update({ vonage_verify_check_url: null, vonage_verify_status: null, vonage_verify_request_id: null })
-    console.log('checkSilentAuthStatus() - Verification completed');
+    console.log('getCheckStatus() - Verification completed');
     // Create a JWT for the user
     const jwt = createJWT(user.id)
 
@@ -220,13 +203,15 @@ async function checkSilentAuthStatus(req, res) {
     return res.status(200).json({ success: 'Account verified!', token: jwt })
   } else if (user.vonage_verify_status === 'user_rejected') {
     user.update({ vonage_verify_check_url: null, vonage_verify_status: null, vonage_verify_request_id: null })
-    console.log('checkSilentAuthStatus() - User Rejected (Not a match)');
+    console.log('getCheckStatus() - User Rejected (Not a match)');
+
     return res.sendStatus(401)
-  } else {
-    user.update({ vonage_verify_check_url: null, vonage_verify_status: null, vonage_verify_request_id: null })
-    console.log('checkSilentAuthStatus() - Unexpected Error');
-    return res.sendStatus(400)
   }
+
+  user.update({ vonage_verify_check_url: null, vonage_verify_status: null, vonage_verify_request_id: null })
+  console.log('getCheckStatus() - Unexpected Error');
+
+  return res.sendStatus(400)
 }
 
 module.exports = {
@@ -235,6 +220,5 @@ module.exports = {
   login,
   verify,
   callback,
-  getSilentAuthCheckUrl,
-  checkSilentAuthStatus
+  getCheckStatus
 }
