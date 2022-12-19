@@ -13,17 +13,29 @@ import PhoneInput from 'react-native-phone-number-input';
 import {getDeviceToken} from '../utils/deviceUtil';
 import {SERVER_BASE_URL} from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import parsePhoneNumber, {CountryCode} from 'libphonenumber-js';
 
 import SilentAuthSdkReactNative, {
   CheckResponse,
 } from '@silentauth/silentauth-sdk-react-native';
 
 const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
-  const [defaultNumber, setDefaultNumber] = useState('');
   const [inputNumber, setInputNumber] = useState('');
-  const [countryCode, setCountryCode] = useState('GB');
+  const [defaultNumber, setDefaultNumber] = useState('');
+  const [countryCode, setCountryCode] = useState<CountryCode>('GB');
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [isPhoneNumberValidState, setIsPhoneNumberValidState] = useState(false);
+
+  useEffect(() => {
+    const phoneNumber = parsePhoneNumber(inputNumber, countryCode);
+
+    if (phoneNumber?.isValid()) {
+      setIsPhoneNumberValidState(true);
+    } else {
+      setIsPhoneNumberValidState(false);
+    }
+  }, [inputNumber, countryCode]);
 
   const getCheckResults = async (requestId: string) => {
     const deviceToken = await getDeviceToken();
@@ -46,6 +58,7 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
 
       if (checkResponse.status === 200) {
         checkResponseData = await checkResponse.json();
+        console.log(`Check Response: ${checkResponseData}`);
 
         if ('token' in checkResponseData) {
           clearInterval(interval);
@@ -98,9 +111,11 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
           await SilentAuthSdkReactNative.openWithDataCellular<CheckResponse>(
             checkUrlResponseData.check_url,
           );
-        console.log(`openWithDataCellular => ${resp}`);
 
         if ('error' in resp) {
+          console.log(
+            `Error in openWithDataCellular: ${resp.error_description}`,
+          );
           setIsLoading(false);
           setErrorMessage('Unexpected error occured');
         } else if ('http_status' in resp) {
@@ -122,14 +137,11 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
     setErrorMessage('');
     setIsLoading(true);
 
-    if (countryCode === '') {
-      setCountryCode('GB');
-    }
-
     const deviceToken = await getDeviceToken();
+    const tel = parsePhoneNumber(inputNumber, countryCode)?.number;
 
     // Step 1 - Make POST to /login
-    const body = {phone_number: inputNumber, country_code: countryCode};
+    const body = {phone_number: tel, country_code: countryCode};
     const response = await fetch(`${SERVER_BASE_URL}/login`, {
       method: 'POST',
       body: JSON.stringify(body),
@@ -178,7 +190,7 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
           />
         </View>
       ) : (
-        <TouchableOpacity onPress={loginHandler} style={styles.button}>
+        <TouchableOpacity onPress={loginHandler} style={styles.button} disabled={!isPhoneNumberValidState}>
           <Text style={styles.buttonText}>Login</Text>
         </TouchableOpacity>
       )}
