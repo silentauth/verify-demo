@@ -44,6 +44,10 @@ const VerifyScreen = ({
       } catch (e) {
         console.log(e);
       }
+    } else {
+      console.log('Verification does not exist or has expired!!');
+      setPin('');
+      navigation.navigate('Login', {errorMessage: data?.error});
     }
   };
 

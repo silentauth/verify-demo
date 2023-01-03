@@ -19,13 +19,24 @@ import SilentAuthSdkReactNative, {
   CheckResponse,
 } from '@silentauth/silentauth-sdk-react-native';
 
-const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
+const LoginScreen = ({
+  navigation,
+  route,
+}: StackScreenProps<{HomeScreen: any}>) => {
   const [inputNumber, setInputNumber] = useState('');
   const [defaultNumber, setDefaultNumber] = useState('');
   const [countryCode, setCountryCode] = useState<CountryCode>('GB');
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [isPhoneNumberValidState, setIsPhoneNumberValidState] = useState(false);
+
+  useEffect(() => {
+    const error = route?.params?.errorMessage;
+
+    if (error) {
+      setErrorMessage(error);
+    }
+  }, [route]);
 
   useEffect(() => {
     const phoneNumber = parsePhoneNumber(inputNumber, countryCode);
@@ -72,6 +83,10 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
             setErrorMessage('Unexpected Error. Unable to log in.');
           }
         }
+      } else if (checkResponse.status === 302) {
+        setIsLoading(false);
+        clearInterval(interval);
+        navigation.navigate('Verify', {requestId: requestId});
       } else if (checkResponse.status === 401) {
         setIsLoading(false);
         clearInterval(interval);
@@ -213,6 +228,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     marginTop: 120,
+    marginLeft: 20,
+    marginRight: 20,
   },
   heading: {
     fontSize: 20,

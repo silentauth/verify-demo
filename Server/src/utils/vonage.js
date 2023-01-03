@@ -52,7 +52,7 @@ async function createRequest(phoneNumber) {
 
   const body = {brand: brand, workflow: [
     {channel: "silent_auth", to: phoneNumber}, 
-    // {channel: "sms", to: phoneNumber}, 
+    // {channel: "sms", to: phoneNumber},
     // {channel: "voice", to: phoneNumber}
   ]};
 

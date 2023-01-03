@@ -92,7 +92,7 @@ async function verify(req, res) {
   const { request_id, pin } = req.body
 
   if (!request_id || !pin) {
-    res.status(400).json({ message: "A `request_id` or `pin` was not provided." })
+    res.status(400).json({ error: "A `request_id` or `pin` was not provided." })
 
     return
   }
@@ -100,7 +100,7 @@ async function verify(req, res) {
   const user = await db.User.findOne({ where: { vonage_verify_request_id: request_id } })
 
   if (!user) {
-    // User already exists.. redirect to register
+    // User doesn't exist.. return 404
     res.sendStatus(404)
 
     return;
@@ -120,7 +120,7 @@ async function verify(req, res) {
   } else if (verify.status >= 400 && verify.status < 500) {
     return res.status(400).json({ error: verify.body.detail})
   } else {
-    return res.status(500).json({ error:  'Server Error' })
+    return res.status(500).json({ error: 'Server Error' })
   }
 }
 
@@ -132,6 +132,19 @@ function device(req, res) {
 }
 
 async function callback(req, res) {
+  if (req.body.type === "summary" && req.body.status === "expired") {
+    const user = await db.User.findOne({ where: { vonage_verify_request_id: req.body.request_id } })
+
+    if (!user) {
+      // No user found, return false
+      return res.status(200).json({})
+    }
+
+    user.update({ vonage_verify_check_url: null, vonage_verify_status: null })
+
+    return res.status(200).json({})
+  }
+
   if (req.body.type !== "event") {
     return res.status(200).json({})
   }
@@ -145,12 +158,12 @@ async function callback(req, res) {
 
     if (!user) {
       // No user found, return false
-      return res.status(200).json({})
+      return res.status(404).json({})
     }
 
     user.update({ vonage_verify_check_url: statusCallback.check_url, vonage_verify_status: statusCallback.status })
 
-    return res.status(200).json({})
+    return res.status(404).json({})
   }
 
   // Check to make sure the callback is the status Update callback for a `silent_auth` with 
@@ -206,6 +219,11 @@ async function getCheckStatus(req, res) {
     console.log('getCheckStatus() - User Rejected (Not a match)');
 
     return res.sendStatus(401)
+  } else if (user.vonage_verify_status === 'expired') {
+    user.update({ vonage_verify_check_url: null, vonage_verify_status: null })
+    console.log('getCheckStatus() - Expired');
+
+    return res.sendStatus(302)
   }
 
   user.update({ vonage_verify_check_url: null, vonage_verify_status: null, vonage_verify_request_id: null })
