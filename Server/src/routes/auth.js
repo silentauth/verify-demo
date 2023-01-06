@@ -132,7 +132,9 @@ function device(req, res) {
 }
 
 async function callback(req, res) {
-  if (req.body.type === "summary" && req.body.status === "expired") {
+  console.log('callback = ', JSON.stringify(req.body))
+
+  if (req.body.type === "summary" && ["expired", "failed"].includes(req.body.status)) {
     const user = await db.User.findOne({ where: { vonage_verify_request_id: req.body.request_id } })
 
     if (!user) {
@@ -219,9 +221,9 @@ async function getCheckStatus(req, res) {
     console.log('getCheckStatus() - User Rejected (Not a match)');
 
     return res.sendStatus(401)
-  } else if (user.vonage_verify_status === 'expired') {
+  } else if (['expired', 'failed'].includes(user.vonage_verify_status)) {
     user.update({ vonage_verify_check_url: null, vonage_verify_status: null })
-    console.log('getCheckStatus() - Expired');
+    console.log('getCheckStatus() - Expired or Failed');
 
     return res.sendStatus(302)
   }
