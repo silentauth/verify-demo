@@ -14,7 +14,6 @@ import PhoneInput from 'react-native-phone-number-input';
 import {getDeviceToken} from '../utils/deviceUtil';
 import {SERVER_BASE_URL} from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import parsePhoneNumber, {CountryCode} from 'libphonenumber-js';
 
 import SilentAuthSdkReactNative, {
   CheckResponse,
@@ -61,7 +60,6 @@ const LoginScreen = ({
 
   const getCheckResults = async (requestId: string) => {
     const deviceToken = await getDeviceToken();
-    const tel = parsePhoneNumber(inputNumber, countryCode)?.number;
 
     let interval = setInterval(async () => {
       var checkResponse;
@@ -183,7 +181,7 @@ const LoginScreen = ({
     if (response.status === 200) {
       await getCheckUrlFromApi(data.requestId);
     } else {
-      setErrorMessage(data.message);
+      setErrorMessage(data.error);
       setIsLoading(false);
     }
   };
