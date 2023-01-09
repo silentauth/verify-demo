@@ -31,6 +31,8 @@ async function login(req, res) {
       user.update({ vonage_verify_request_id: verify.body.request_id})
 
       return res.status(200).json({ requestId: verify.body.request_id })
+    } else if (verify.status === 409) {
+      return res.status(400).json({ error: verify.body.detail })
     } else if (verify.status === 422) {
       return res.status(400).json({ error: verify.body.detail})
     } else {
