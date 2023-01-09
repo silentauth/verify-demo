@@ -49,11 +49,6 @@ const LoginScreen = ({
     }
   }, [inputNumber, countryCode]);
 
-  const loginHandler = async () => {
-    Keyboard.dismiss();
-    setErrorMessage('');
-    setIsLoading(true);
-
   useEffect(() => {
     const phoneNumber = parsePhoneNumber(inputNumber, countryCode);
 
@@ -162,6 +157,35 @@ const LoginScreen = ({
         }
       }
     }, 3000);
+  };
+
+  const loginHandler = async () => {
+    Keyboard.dismiss();
+    setErrorMessage('');
+    setIsLoading(true);
+
+    const deviceToken = await getDeviceToken();
+    const tel = parsePhoneNumber(inputNumber, countryCode)?.number;
+
+    // Step 1 - Make POST to /login
+    const body = {phone_number: tel, country_code: countryCode};
+    const response = await fetch(`${SERVER_BASE_URL}/login`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json',
+        'silent-auth': deviceToken?.token,
+        'device-id': deviceToken?.deviceId,
+      },
+    });
+    const data = await response.json();
+
+    if (response.status === 200) {
+      await getCheckUrlFromApi(data.requestId);
+    } else {
+      setErrorMessage(data.message);
+      setIsLoading(false);
+    }
   };
 
   const AppButton = () => (
