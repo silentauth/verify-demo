@@ -1,31 +1,57 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Keyboard,
+  ActivityIndicator,
+  TouchableOpacity,
+} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
+import parsePhoneNumber, {CountryCode} from 'libphonenumber-js';
 
 import PhoneInput from 'react-native-phone-number-input';
 import {getDeviceToken} from '../utils/deviceUtil';
 import {SERVER_BASE_URL} from '@env';
 
-const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
-  const [value, setValue] = useState('');
-  const [formattedValue, setFormattedValue] = useState('');
-  const [countryCode, setCountryCode] = useState('GB');
+const LoginScreen = ({
+  navigation,
+  route,
+}: StackScreenProps<{HomeScreen: any}>) => {
+  const [inputNumber, setInputNumber] = useState('');
+  const [defaultNumber, setDefaultNumber] = useState('');
+  const [countryCode, setCountryCode] = useState<CountryCode>('GB');
   const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [isPhoneNumberValidState, setIsPhoneNumberValidState] = useState(false);
 
-  const phoneInput = useRef<PhoneInput>(null);
+  useEffect(() => {
+    const error = route?.params?.errorMessage;
+
+    if (error) {
+      setErrorMessage(error);
+    }
+  }, [route]);
+
+  useEffect(() => {
+    const phoneNumber = parsePhoneNumber(inputNumber, countryCode);
+
+    if (phoneNumber?.isValid()) {
+      setIsPhoneNumberValidState(true);
+    } else {
+      setIsPhoneNumberValidState(false);
+    }
+  }, [inputNumber, countryCode]);
 
   const loginHandler = async () => {
-    if (countryCode === '') {
-      setCountryCode('GB');
-    }
+    Keyboard.dismiss();
+    setErrorMessage('');
+    setIsLoading(true);
 
     const deviceToken = await getDeviceToken();
+    const tel = parsePhoneNumber(inputNumber, countryCode)?.number;
 
-    console.log({
-      'silent-auth': deviceToken.token,
-      'device-id': deviceToken.deviceId,
-    });
-    const body = {phone_number: formattedValue, country_code: countryCode};
+    const body = {phone_number: tel, country_code: countryCode};
     const response = await fetch(`${SERVER_BASE_URL}/login`, {
       method: 'POST',
       body: JSON.stringify(body),
@@ -39,69 +65,98 @@ const LoginScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
 
     if (response.status === 200) {
       console.log('Verification Sent!!');
+      setIsLoading(false);
       navigation.navigate('Verify', {requestId: data.requestId});
     } else {
+      setIsLoading(false);
       setErrorMessage(data.error);
     }
   };
 
+  const AppButton = () => (
+    <TouchableOpacity
+      onPress={loginHandler}
+      style={[
+        styles.button,
+        isPhoneNumberValidState ? styles.enabledButton : styles.disabledButton,
+      ]}
+      disabled={!isPhoneNumberValidState}>
+      <Text style={styles.buttonText}>Login</Text>
+    </TouchableOpacity>
+  );
+
   return (
-    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+    <View style={styles.view}>
       <Text style={styles.heading}>Welcome to the Demo Application</Text>
       <Text style={styles.subHeading}>
         Please enter your phone number to login.
       </Text>
       <Text style={styles.errorText}>{errorMessage}</Text>
       <PhoneInput
-        ref={phoneInput}
-        defaultValue={value}
+        defaultValue={defaultNumber}
         defaultCode="GB"
         onChangeText={text => {
-          console.log(text);
-          setValue(text);
+          setInputNumber(text);
         }}
         onChangeFormattedText={text => {
-          console.log(text);
-          setFormattedValue(text);
+          setInputNumber(text);
         }}
         onChangeCountry={text => {
           setCountryCode(text.cca2);
-          console.log(countryCode);
         }}
       />
 
-      <TouchableOpacity onPress={loginHandler} style={styles.button}>
-        <Text style={styles.buttonText}>Login</Text>
-      </TouchableOpacity>
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator
+            color={styles.loadingContainer.color}
+            size="large"
+          />
+        </View>
+      ) : (
+        <AppButton />
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  heading: {
-    fontSize: 20,
-    marginBottom: 50,
+  view: {
+    flex: 1,
+    alignItems: 'center',
+    marginTop: 120,
     marginLeft: 20,
     marginRight: 20,
   },
+  heading: {
+    fontSize: 20,
+    marginBottom: 10,
+    marginLeft: 10,
+    marginRight: 10,
+  },
   subHeading: {
     fontSize: 15,
-    marginBottom: 20,
-    marginLeft: 20,
-    marginRight: 20,
+    marginBottom: 10,
+    marginLeft: 10,
+    marginRight: 10,
   },
   button: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1955ff',
     color: '#fff',
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 5,
     borderWidth: 2,
     borderColor: '#1955ff',
-    marginTop: 20,
+    marginTop: 10,
     width: '80%',
+  },
+  disabledButton: {
+    backgroundColor: '#EBEBE4',
+  },
+  enabledButton: {
+    backgroundColor: '#1955ff',
   },
   buttonText: {
     color: '#fff',
@@ -112,6 +167,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     marginLeft: 20,
     marginRight: 20,
+  },
+  loadingContainer: {
+    marginTop: 40,
+    justifyContent: 'center',
+    color: '#00B4FF',
   },
 });
 

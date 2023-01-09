@@ -4,7 +4,6 @@ import {createStackNavigator} from '@react-navigation/stack';
 
 import HomeScreen from './components/HomeScreen';
 import SecureScreen from './components/SecureScreen';
-import RegisterScreen from './components/RegisterScreen';
 import VerifyScreen from './components/VerifyScreen';
 import LoginScreen from './components/LoginScreen';
 
@@ -33,11 +32,6 @@ function NavStack() {
         name="Secure"
         component={SecureScreen}
         options={{title: 'Secure'}}
-      />
-      <Stack.Screen
-        name="Register"
-        component={RegisterScreen}
-        options={{title: 'Register'}}
       />
       <Stack.Screen
         name="Login"

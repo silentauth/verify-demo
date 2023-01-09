@@ -21,9 +21,8 @@ async function generateJWT() {
     privateKey: privateKey
   })
 
-  // TODO: Check the claims.
   let claims = {
-    exp: Math.round(new Date().getTime() / 1000) + 120,
+    exp: Math.round(new Date().getTime() / 1000) + 86400,
     acl: {
       paths: {
         "/*/users/**": {},
@@ -50,7 +49,10 @@ async function generateJWT() {
 async function createRequest(phoneNumber) {
   const brand = process.env.BRAND_NAME
 
-  const body = {brand: brand, workflow: [{channel: "sms", to: phoneNumber}, {channel: "voice", to: phoneNumber}]};
+  const body = {brand: brand, workflow: [
+    {channel: "sms", to: phoneNumber},
+    {channel: "voice", to: phoneNumber}
+  ]};
 
   const vonage = await getVonageCreds()
   const response = await fetch('https://api.nexmo.com/v2/verify', {

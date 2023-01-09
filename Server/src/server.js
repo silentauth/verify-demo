@@ -5,7 +5,7 @@ const ngrok = require('ngrok')
 
 require('dotenv').config()
 
-const port = 3000;
+const port = 8080;
 
 async function connectNgrok() {
   let url = await ngrok.connect({
@@ -32,7 +32,7 @@ async function serve() {
     console.log(`Verify Server app listening at http://localhost:${port}`)
     console.log('Starting Ngrok now')
 
-    connectNgrok()
+    // connectNgrok()
   })
 
   return {
