@@ -27,7 +27,6 @@ async function login(req, res) {
     // Submit Verification Request.
     const verify = await vonage.createRequest(parsedPhoneNumber.number)
 
-    console.log(verify);
     if (verify.status === 202) {
       user.update({ vonage_verify_request_id: verify.body.request_id})
 
