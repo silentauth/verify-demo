@@ -21,7 +21,6 @@ async function generateJWT() {
     privateKey: privateKey
   })
 
-  // TODO: Check the claims.
   let claims = {
     exp: Math.round(new Date().getTime() / 1000) + 86400,
     acl: {

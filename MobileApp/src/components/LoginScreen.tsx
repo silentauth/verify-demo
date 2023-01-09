@@ -3,11 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
   Keyboard,
+  ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
+import parsePhoneNumber, {CountryCode} from 'libphonenumber-js';
 
 import PhoneInput from 'react-native-phone-number-input';
 import {getDeviceToken} from '../utils/deviceUtil';
@@ -48,8 +49,24 @@ const LoginScreen = ({
     }
   }, [inputNumber, countryCode]);
 
+  const loginHandler = async () => {
+    Keyboard.dismiss();
+    setErrorMessage('');
+    setIsLoading(true);
+
+  useEffect(() => {
+    const phoneNumber = parsePhoneNumber(inputNumber, countryCode);
+
+    if (phoneNumber?.isValid()) {
+      setIsPhoneNumberValidState(true);
+    } else {
+      setIsPhoneNumberValidState(false);
+    }
+  }, [inputNumber, countryCode]);
+
   const getCheckResults = async (requestId: string) => {
     const deviceToken = await getDeviceToken();
+    const tel = parsePhoneNumber(inputNumber, countryCode)?.number;
 
     let interval = setInterval(async () => {
       var checkResponse;
