@@ -32,7 +32,7 @@ async function serve() {
     console.log(`Verify Server app listening at http://localhost:${port}`)
     console.log('Starting Ngrok now')
 
-    // connectNgrok()
+    connectNgrok()
   })
 
   return {
