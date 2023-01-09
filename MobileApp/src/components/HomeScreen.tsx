@@ -1,9 +1,10 @@
 // screens/Home.js
 import React, {useEffect} from 'react';
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {View, Text, TouchableOpacity} from 'react-native';
 import {getUniqueId} from 'react-native-device-info';
 import {SERVER_BASE_URL} from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {styles} from '../public/styles';
 
 interface Props {
   navigation: any;
@@ -42,46 +43,15 @@ function HomeScreen({navigation}: Props) {
   });
 
   return (
-    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+    <View style={styles.view}>
       <Text style={styles.heading}>Welcome to the Demo Application</Text>
       <TouchableOpacity
         onPress={() => navigation.navigate('Login')}
-        style={styles.button}>
+        style={[styles.button, styles.enabledButton]}>
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  heading: {
-    fontSize: 20,
-    marginBottom: 50,
-    marginLeft: 20,
-    marginRight: 20,
-  },
-  subHeading: {
-    fontSize: 15,
-    marginBottom: 20,
-    marginLeft: 20,
-    marginRight: 20,
-  },
-  button: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#1955ff',
-    color: '#fff',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 5,
-    borderWidth: 2,
-    borderColor: '#1955ff',
-    marginTop: 20,
-    width: '80%',
-  },
-  buttonText: {
-    color: '#fff',
-  },
-});
 
 export default HomeScreen;

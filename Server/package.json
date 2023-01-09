@@ -20,6 +20,7 @@
     "njwt": "^1.2.0",
     "node-fetch": "^2.6.7",
     "sequelize": "^6.25.3",
+    "sequelize-cli": "^6.5.2",
     "sqlite3": "^5.1.2"
   }
 }

@@ -2,7 +2,6 @@ import React, {useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   Keyboard,
   ActivityIndicator,
   TouchableOpacity,
@@ -13,6 +12,7 @@ import parsePhoneNumber, {CountryCode} from 'libphonenumber-js';
 import PhoneInput from 'react-native-phone-number-input';
 import {getDeviceToken} from '../utils/deviceUtil';
 import {SERVER_BASE_URL} from '@env';
+import {styles} from '../public/styles';
 
 const LoginScreen = ({
   navigation,
@@ -73,18 +73,6 @@ const LoginScreen = ({
     }
   };
 
-  const AppButton = () => (
-    <TouchableOpacity
-      onPress={loginHandler}
-      style={[
-        styles.button,
-        isPhoneNumberValidState ? styles.enabledButton : styles.disabledButton,
-      ]}
-      disabled={!isPhoneNumberValidState}>
-      <Text style={styles.buttonText}>Login</Text>
-    </TouchableOpacity>
-  );
-
   return (
     <View style={styles.view}>
       <Text style={styles.heading}>Welcome to the Demo Application</Text>
@@ -114,65 +102,20 @@ const LoginScreen = ({
           />
         </View>
       ) : (
-        <AppButton />
+        <TouchableOpacity
+          onPress={loginHandler}
+          style={[
+            styles.button,
+            isPhoneNumberValidState
+              ? styles.enabledButton
+              : styles.disabledButton,
+          ]}
+          disabled={!isPhoneNumberValidState}>
+          <Text style={styles.buttonText}>Login</Text>
+        </TouchableOpacity>
       )}
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  view: {
-    flex: 1,
-    alignItems: 'center',
-    marginTop: 120,
-    marginLeft: 20,
-    marginRight: 20,
-  },
-  heading: {
-    fontSize: 20,
-    marginBottom: 10,
-    marginLeft: 10,
-    marginRight: 10,
-  },
-  subHeading: {
-    fontSize: 15,
-    marginBottom: 10,
-    marginLeft: 10,
-    marginRight: 10,
-  },
-  button: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#fff',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 5,
-    borderWidth: 2,
-    borderColor: '#1955ff',
-    marginTop: 10,
-    width: '80%',
-  },
-  disabledButton: {
-    backgroundColor: '#EBEBE4',
-  },
-  enabledButton: {
-    backgroundColor: '#1955ff',
-  },
-  buttonText: {
-    color: '#fff',
-  },
-  errorText: {
-    color: '#FF0000',
-    fontSize: 15,
-    marginBottom: 20,
-    marginLeft: 20,
-    marginRight: 20,
-  },
-  loadingContainer: {
-    marginTop: 40,
-    justifyContent: 'center',
-    color: '#00B4FF',
-  },
-});
 
 export default LoginScreen;

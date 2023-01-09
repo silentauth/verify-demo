@@ -1,14 +1,9 @@
-import React, {useState} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {View, Text, TouchableOpacity, TextInput} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {getDeviceToken} from '../utils/deviceUtil';
+import {styles} from '../public/styles';
 
 import {SERVER_BASE_URL} from '@env';
 
@@ -17,6 +12,15 @@ const VerifyScreen = ({
   route,
 }: StackScreenProps<{HomeScreen: any}>) => {
   const [pin, setPin] = useState('');
+  const [isPinValidState, setIsPinValidState] = useState(false);
+
+  useEffect(() => {
+    if (pin.length === 4) {
+      setIsPinValidState(true);
+    } else {
+      setIsPinValidState(false);
+    }
+  }, [pin]);
 
   const verifyHandler = async () => {
     const body = {request_id: route?.params?.requestId, pin: pin};
@@ -67,54 +71,16 @@ const VerifyScreen = ({
         value={pin}
       />
 
-      <TouchableOpacity onPress={verifyHandler} style={styles.button}>
+      <TouchableOpacity
+        onPress={verifyHandler}
+        style={[
+          styles.button,
+          isPinValidState ? styles.enabledButton : styles.disabledButton,
+        ]}>
         <Text style={styles.buttonText}>Verify Me!</Text>
       </TouchableOpacity>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  view: {
-    flex: 1,
-    alignItems: 'center',
-    marginTop: 120,
-    marginLeft: 20,
-    marginRight: 20,
-  },
-  heading: {
-    fontSize: 20,
-    marginBottom: 10,
-    marginLeft: 10,
-    marginRight: 10,
-  },
-  subHeading: {
-    fontSize: 15,
-    marginBottom: 10,
-    marginLeft: 10,
-    marginRight: 10,
-  },
-  input: {
-    fontSize: 20,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    marginVertical: 20,
-  },
-  button: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#fff',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 5,
-    borderWidth: 2,
-    borderColor: '#1955ff',
-    marginTop: 10,
-    width: '80%',
-  },
-  buttonText: {
-    color: '#fff',
-  },
-});
 
 export default VerifyScreen;

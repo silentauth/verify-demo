@@ -1,9 +1,10 @@
 import React, {useState, useEffect} from 'react';
-import {TouchableOpacity, View, Text, StyleSheet} from 'react-native';
+import {TouchableOpacity, View, Text} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import {SERVER_BASE_URL} from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {getDeviceToken} from '../utils/deviceUtil';
+import {styles} from '../public/styles';
 
 const SecureScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -58,7 +59,7 @@ const SecureScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
   };
 
   return (
-    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+    <View style={styles.view}>
       <Text style={styles.heading}>
         Welcome to the Secure Section of Demo Application
       </Text>
@@ -76,36 +77,5 @@ const SecureScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  heading: {
-    fontSize: 20,
-    marginBottom: 50,
-    marginLeft: 20,
-    marginRight: 20,
-  },
-  subHeading: {
-    fontSize: 15,
-    marginBottom: 20,
-    marginLeft: 20,
-    marginRight: 20,
-  },
-  button: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#1955ff',
-    color: '#fff',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 5,
-    borderWidth: 2,
-    borderColor: '#1955ff',
-    marginTop: 20,
-    width: '80%',
-  },
-  buttonText: {
-    color: '#fff',
-  },
-});
 
 export default SecureScreen;
