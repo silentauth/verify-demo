@@ -39,3 +39,9 @@ npm run android
 ```bash
 npm run ios
 ```
+
+## How it works
+
+![verify workflow](./verify_workflow.png)
+
+
