@@ -385,6 +385,10 @@ PODS:
   - RNScreens (3.18.2):
     - React-Core
     - React-RCTImage
+  - silentauth-sdk-ios (1.0.1)
+  - silentauth-sdk-react-native (1.0.2):
+    - React-Core
+    - silentauth-sdk-ios (= 1.0.1)
   - SocketRocket (0.6.0)
   - Yoga (1.14.0)
   - YogaKit (1.18.1):
@@ -455,6 +459,7 @@ DEPENDENCIES:
   - RNDeviceInfo (from `../node_modules/react-native-device-info`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNScreens (from `../node_modules/react-native-screens`)
+  - "silentauth-sdk-react-native (from `../node_modules/@silentauth/silentauth-sdk-react-native`)"
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
@@ -472,6 +477,7 @@ SPEC REPOS:
     - fmt
     - libevent
     - OpenSSL-Universal
+    - silentauth-sdk-ios
     - SocketRocket
     - YogaKit
 
@@ -554,6 +560,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-gesture-handler"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  silentauth-sdk-react-native:
+    :path: "../node_modules/@silentauth/silentauth-sdk-react-native"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
@@ -610,6 +618,8 @@ SPEC CHECKSUMS:
   RNDeviceInfo: 4701f0bf2a06b34654745053db0ce4cb0c53ada7
   RNGestureHandler: 62232ba8f562f7dea5ba1b3383494eb5bf97a4d3
   RNScreens: 34cc502acf1b916c582c60003dc3089fa01dc66d
+  silentauth-sdk-ios: 8ef7bc15f6aa24a66e4625053abb668587867bd2
+  silentauth-sdk-react-native: ca7f32b947256e62bf9e9ef353ee56ccb555e54e
   SocketRocket: fccef3f9c5cedea1353a9ef6ada904fde10d6608
   Yoga: 1f02ef4ce4469aefc36167138441b27d988282b1
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a

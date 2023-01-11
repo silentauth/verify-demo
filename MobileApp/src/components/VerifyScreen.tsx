@@ -25,6 +25,7 @@ const VerifyScreen = ({
   const verifyHandler = async () => {
     const body = {request_id: route?.params?.requestId, pin: pin};
     const deviceToken = await getDeviceToken();
+    console.log("url= ",SERVER_BASE_URL); 
 
     const response = await fetch(`${SERVER_BASE_URL}/verify`, {
       method: 'POST',

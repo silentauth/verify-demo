@@ -61,6 +61,7 @@ const LoginScreen = ({
 
   const getCheckResults = async (requestId: string) => {
     const deviceToken = await getDeviceToken();
+    console.log("url= ",SERVER_BASE_URL); 
 
     let interval = setInterval(async () => {
       var checkResponse;

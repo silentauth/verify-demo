@@ -12,7 +12,7 @@ interface Props {
 
 async function createDeviceToken() {
   const deviceId = await getUniqueId();
-
+  console.log("url= ",SERVER_BASE_URL); 
   const response = await fetch(
     `${SERVER_BASE_URL}/device?deviceId=${deviceId}`,
     {
