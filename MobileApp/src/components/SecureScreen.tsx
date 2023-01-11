@@ -11,8 +11,6 @@ const SecureScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
 
   const onScreenLoad = async () => {
     var token;
-    console.log("url= ",SERVER_BASE_URL); 
-
     try {
       token = await AsyncStorage.getItem('@auth');
     } catch (e) {
