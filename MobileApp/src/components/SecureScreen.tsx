@@ -70,9 +70,7 @@ const SecureScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
         Here is your phone number, retrieved from an authenticated endpoint on
         the server: {phoneNumber}.
       </Text>
-      <TouchableOpacity
-        onPress={logoutHandler}
-        style={[styles.button, styles.enabledButton]}>
+      <TouchableOpacity onPress={logoutHandler} style={[styles.button, styles.enabledButton]}>
         <Text style={styles.buttonText}>Logout</Text>
       </TouchableOpacity>
     </View>

@@ -13,6 +13,7 @@ const VerifyScreen = ({
 }: StackScreenProps<{HomeScreen: any}>) => {
   const [pin, setPin] = useState('');
   const [isPinValidState, setIsPinValidState] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     if (pin.length === 4) {
@@ -47,6 +48,16 @@ const VerifyScreen = ({
       } catch (e) {
         console.log(e);
       }
+    } else if (response.status === 400) {
+      console.log('Verification Pin incorrect!!');
+      setErrorMessage('Incorrect pin entered. Please retry');
+      setPin('');
+    } else if (response.status === 409) {
+      console.log("Workflow doesn't require a pin.");
+      setErrorMessage(
+        'A pin is not required for this step of the verification process.',
+      );
+      setPin('');
     } else {
       console.log('Verification does not exist or has expired!!');
       setPin('');
@@ -60,6 +71,7 @@ const VerifyScreen = ({
       <Text style={styles.subHeading}>
         Please enter your verification code to continue.
       </Text>
+      <Text style={styles.errorText}>{errorMessage}</Text>
 
       <TextInput
         style={styles.input}
@@ -70,13 +82,7 @@ const VerifyScreen = ({
         value={pin}
       />
 
-      <TouchableOpacity
-        onPress={verifyHandler}
-        style={[
-          styles.button,
-          isPinValidState ? styles.enabledButton : styles.disabledButton,
-        ]}
-        disabled={!isPinValidState}>
+      <TouchableOpacity onPress={verifyHandler} style={[styles.button, styles.enabledButton]}>
         <Text style={styles.buttonText}>Verify Me!</Text>
       </TouchableOpacity>
     </View>
