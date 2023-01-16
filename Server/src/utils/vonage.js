@@ -2,9 +2,15 @@ const fetch = require('node-fetch')
 const Vonage = require('@vonage/server-sdk')
 
 var vonage = null
+var jwtExpiration = null
 
 async function getVonageCreds() {
-  if (vonage === null) {
+  console.log('Retrieving Vonage Credentials')
+  if (vonage === null && jwtExpiration === null) {
+    console.log('Generating JWT for the first time')
+    vonage = await generateJWT()
+  } else if (vonage !== null && jwtExpiration < Math.round(new Date().getTime() / 1000)) {
+    console.log('Regenerating JWT due to expiration')
     vonage = await generateJWT()
   }
 
@@ -21,8 +27,10 @@ async function generateJWT() {
     privateKey: privateKey
   })
 
+  jwtExpiration = Math.round(new Date().getTime() / 1000) + 86400
+
   let claims = {
-    exp: Math.round(new Date().getTime() / 1000) + 86400,
+    exp: jwtExpiration,
     acl: {
       paths: {
         "/*/users/**": {},
@@ -66,6 +74,7 @@ async function createRequest(phoneNumber) {
   });
 
   const data = await response.json();
+  console.log('createRequest', JSON.stringify(data))
 
   return { status: response.status, body: data}
 }
@@ -88,6 +97,8 @@ async function verifyRequest(requestId, code) {
   if (response.status !== 200) {
     dataResponse = await response.json()
   }
+
+  console.log('verifyRequest = ', JSON.stringify(dataResponse))
 
   return { status: response.status, body: dataResponse}
 }
