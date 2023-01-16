@@ -137,11 +137,10 @@ const LoginScreen = ({
           );
 
         if ('error' in resp) {
-          console.log(
+          setIsLoading(false);
+          setErrorMessage(
             `Error in openWithDataCellular: ${resp.error_description}`,
           );
-          setIsLoading(false);
-          setErrorMessage('Unexpected error occured');
         } else if ('http_status' in resp) {
           const httpStatus = resp.http_status;
 
