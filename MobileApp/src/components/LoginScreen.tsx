@@ -126,9 +126,10 @@ const LoginScreen = ({
           },
         },
       );
-      checkUrlResponseData = await checkUrlResponse.json();
 
-      if (checkUrlResponse.status === 200 && checkUrlResponseData.check_url) {
+      if (checkUrlResponse.status === 200) {
+        checkUrlResponseData = await checkUrlResponse.json();
+
         clearInterval(interval);
 
         const resp =
@@ -151,6 +152,10 @@ const LoginScreen = ({
             navigation.navigate('Verify', {requestId: requestId});
           }
         }
+      } else if (checkUrlResponse.status === 302) {
+        clearInterval(interval);
+        setIsLoading(false);
+        navigation.navigate('Verify', {requestId: requestId});
       }
     }, 3000);
   };

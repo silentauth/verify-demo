@@ -106,16 +106,16 @@ async function verifyRequest(requestId, code) {
 async function statusCallback(req) {
   const { request_id, type, channel, status, action } = req.body
 
-  if (!request_id || !type || !channel || !status || !action) {
+  if (!request_id || !type || !channel || !status) {
     return false
   }
 
-  if (channel !== 'silent_auth' || status !== 'action_pending' || action.type !== 'check' || !action.check_url) {
+  if (channel !== 'silent_auth' || !['action_pending', 'failed'].includes(status)) {
     return false
   }
 
   // Do the next thing!
-  return { request_id: request_id, status: status, type: action.type, check_url: action.check_url }
+  return { request_id: request_id, status: status, type: action?.type, check_url: action?.check_url }
 }
 
 async function completeCallback(req) {

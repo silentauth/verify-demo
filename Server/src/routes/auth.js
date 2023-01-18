@@ -131,12 +131,17 @@ async function callback(req, res) {
 
     if (!user) {
       // No user found, return false
-      return res.status(404).json({})
+      console.log(`callback() - Status Callback - user not found with request_id: ${statusCallback.request_id}`)
+      return res.status(200).json({})
     }
 
-    user.update({ vonage_verify_check_url: statusCallback.check_url, vonage_verify_status: statusCallback.status })
+    if (statusCallback.check_url !== 'defined') {
+      user.update({ vonage_verify_check_url: statusCallback.check_url, vonage_verify_status: statusCallback.status })
+    } else {
+      user.update({ vonage_verify_status: statusCallback.status })
+    }
 
-    return res.status(404).json({})
+    return res.status(200).json({})
   }
 
   // Check to make sure the callback is the status Update callback for a `silent_auth` with 
@@ -148,6 +153,7 @@ async function callback(req, res) {
 
     if (!user) {
       // No user found, return false
+      console.log(`callback() - Event Callback - user not found with request_id: ${completeCallback.request_id}`)
       return res.status(200).json({})
     }
 
