@@ -100,10 +100,12 @@ const LoginScreen = ({
         setIsLoading(false);
         clearInterval(interval);
         setErrorMessage('Phone number not a match.');
-      } else {
+      } else if (checkResponse.status === 404) {
         setIsLoading(false);
         clearInterval(interval);
-        setErrorMessage('Unexpected error occured.');
+        setErrorMessage(
+          `There is not a Verify process in place for the requestId: ${requestId}.`,
+        );
       }
     }, 1000);
   };

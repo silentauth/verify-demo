@@ -210,7 +210,8 @@ async function getCheckStatus(req, res) {
   }
 
   console.log(`getCheckStatus() - ${requestId} - Unexpected Error - status is not action_pending, completed, user_rejected, failed, or expired`);
-  user.update({ vonage_verify_check_url: null, vonage_verify_status: null, vonage_verify_request_id: null })
+  // user.update({ vonage_verify_check_url: null, vonage_verify_status: null, vonage_verify_request_id: null })
+  console.log(user.vonage_verify_check_url, ' - ', user.vonage_verify_status, ' - ', user.vonage_verify_request_id)
 
   return res.sendStatus(400)
 }
