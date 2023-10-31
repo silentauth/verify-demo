@@ -42,7 +42,8 @@ async function generateJWT() {
         "/*/applications/**": {},
         "/*/push/**": {},
         "/*/knocking/**": {},
-        "/*/legs/**": {}
+        "/*/legs/**": {},
+        "/*/verify/**": {},
       }
     }
   }

@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -29,7 +29,6 @@ const LoginScreen = ({
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [isPhoneNumberValidState, setIsPhoneNumberValidState] = useState(false);
-
   useEffect(() => {
     const error = route?.params?.errorMessage;
 
@@ -58,110 +57,6 @@ const LoginScreen = ({
     }
   }, [inputNumber, countryCode]);
 
-  const getCheckResults = async (requestId: string) => {
-    const deviceToken = await getDeviceToken();
-    let interval = setInterval(async () => {
-      var checkResponse;
-      var checkResponseData;
-
-      checkResponse = await fetch(
-        `${SERVER_BASE_URL}/check-status?request_id=${requestId}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'silent-auth': deviceToken?.token,
-            'device-id': deviceToken?.deviceId,
-          },
-        },
-      );
-
-      if (checkResponse.status === 200) {
-        checkResponseData = await checkResponse.json();
-        console.log(`Check Response: ${JSON.stringify(checkResponseData)}`);
-
-        if ('token' in checkResponseData) {
-          clearInterval(interval);
-
-          try {
-            setIsLoading(false);
-            await AsyncStorage.setItem('@auth', checkResponseData.token);
-            navigation.navigate('Secure');
-          } catch (e) {
-            setIsLoading(false);
-            setErrorMessage('Unexpected Error. Unable to log in.');
-          }
-        }
-      } else if (checkResponse.status === 302) {
-        setIsLoading(false);
-        clearInterval(interval);
-        navigation.navigate('Verify', {requestId: requestId});
-      } else if (checkResponse.status === 401) {
-        setIsLoading(false);
-        clearInterval(interval);
-        setErrorMessage('Phone number not a match.');
-      } else if (checkResponse.status === 404) {
-        setIsLoading(false);
-        clearInterval(interval);
-        setErrorMessage(
-          `There is not a Verify process in place for the requestId: ${requestId}.`,
-        );
-      }
-    }, 1000);
-  };
-
-  const getCheckUrlFromApi = async (requestId: string) => {
-    const deviceToken = await getDeviceToken();
-
-    let interval = setInterval(async () => {
-      var checkUrlResponse;
-      var checkUrlResponseData;
-
-      checkUrlResponse = await fetch(
-        `${SERVER_BASE_URL}/check-status?request_id=${requestId}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'silent-auth': deviceToken?.token,
-            'device-id': deviceToken?.deviceId,
-          },
-        },
-      );
-
-      if (checkUrlResponse.status === 200) {
-        checkUrlResponseData = await checkUrlResponse.json();
-
-        clearInterval(interval);
-
-        const resp =
-          await SilentAuthSdkReactNative.openWithDataCellular<CheckResponse>(
-            checkUrlResponseData.check_url,
-          );
-
-        if ('error' in resp) {
-          setIsLoading(false);
-          setErrorMessage(
-            `Error in openWithDataCellular: ${resp.error_description}`,
-          );
-        } else if ('http_status' in resp) {
-          const httpStatus = resp.http_status;
-
-          if (httpStatus >= 200) {
-            await getCheckResults(requestId);
-          } else {
-            setIsLoading(false);
-            navigation.navigate('Verify', {requestId: requestId});
-          }
-        }
-      } else if (checkUrlResponse.status === 302) {
-        clearInterval(interval);
-        setIsLoading(false);
-        navigation.navigate('Verify', {requestId: requestId});
-      }
-    }, 3000);
-  };
-
   const loginHandler = async () => {
     Keyboard.dismiss();
     setErrorMessage('');
@@ -169,24 +64,99 @@ const LoginScreen = ({
 
     const deviceToken = await getDeviceToken();
     const tel = parsePhoneNumber(inputNumber, countryCode)?.number;
-
+    console.log(`silent-auth deviceToken.token: ${deviceToken.token}`);
+    console.log(`device-id deviceToken.deviceId: ${deviceToken.deviceId}`);
     // Step 1 - Make POST to /login
     const body = {phone_number: tel, country_code: countryCode};
-    const response = await fetch(`${SERVER_BASE_URL}/login`, {
+    const loginResponse = await fetch(`${SERVER_BASE_URL}/login`, {
       method: 'POST',
-      body: JSON.stringify(body),
       headers: {
         'Content-Type': 'application/json',
         'silent-auth': deviceToken?.token,
         'device-id': deviceToken?.deviceId,
       },
+      body: JSON.stringify(body),
     });
-    const data = await response.json();
+    const data = await loginResponse.json();
+    if (loginResponse.status === 200) {
+      const requestId = data.requestId;
+      const checkUrl = data.checkUrl; // Vonage CheckURL
+      console.log(`Response from server: ${{data}}`);
+      console.log(`checkurl from login ${checkUrl}`);
+      console.log(`1 requestId from POST/login: ${requestId}`);
 
-    if (response.status === 200) {
-      await getCheckUrlFromApi(data.requestId);
+      const openCheckResponse =
+        await SilentAuthSdkReactNative.openWithDataCellular<CheckResponse>(
+          checkUrl, //url: api-eu-3.vonage.com/
+        );
+
+      if ('error' in openCheckResponse) {
+        setIsLoading(false);
+        setErrorMessage(
+          `Error in openWithDataCellular: ${openCheckResponse.error_description}`,
+        );
+      } else if ('http_status' in openCheckResponse) {
+        const httpStatus = openCheckResponse.http_status;
+        if (httpStatus >= 200) {
+          console.log('Resp from silentauth 200');
+          if (openCheckResponse.response_body) {
+            const rBody = openCheckResponse.response_body;
+            console.log(`SilentAuthResponse Body: ${rBody} ---`);
+            if ('code' in rBody) {
+              const code = rBody.code;
+              console.log(`code: ${code}`);
+              const newBody = {request_id: requestId, pin: code};
+              console.log(`pin/code: ${code}`);
+              console.log(`newBody: ${newBody.request_id} and ${newBody.pin}`);
+
+              const verifyResponse = await fetch(`${SERVER_BASE_URL}/verify`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'silent-auth': deviceToken.token,
+                  'device-id': deviceToken.deviceId,
+                },
+                body: JSON.stringify(newBody),
+              });
+
+              const verifyData = await verifyResponse.json();
+              if (verifyResponse.status === 200) {
+                console.log('Verified! Go to Secure Page!!');
+                try {
+                  await AsyncStorage.setItem('@auth', verifyData.token);
+                  navigation.navigate('Secure');
+                } catch (e) {
+                  console.log(e);
+                }
+              } else if (verifyResponse.status === 400) {
+                console.log('Verification Pin incorrect!!');
+                setErrorMessage('Incorrect pin entered. Please retry');
+              } else if (verifyResponse.status === 409) {
+                console.log("Workflow doesn't require a pin.");
+                setErrorMessage(
+                  'A pin is not required for this step of the verification process.',
+                );
+              } else {
+                console.log('Verification does not exist or has expired!!');
+                navigation.navigate('Login', {errorMessage: verifyData?.error});
+              }
+            } else {
+              setIsLoading(false);
+              console.log('Before Verify No Code...');
+              navigation.navigate('Verify', {requestId: requestId});
+              console.log('After Verify No Code...');
+            }
+          }
+        } else {
+          setIsLoading(false);
+          console.log('Before Verify...');
+          navigation.navigate('Verify', {requestId: requestId});
+          console.log(`After Verify...`);
+        }
+      }
     } else {
-      setErrorMessage(data.error);
+      console.log(`Error response from server: ${{data}}`);
+      setErrorMessage(`Error in login: ${data.error}`);
       setIsLoading(false);
     }
   };
