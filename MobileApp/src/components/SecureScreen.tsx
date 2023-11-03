@@ -54,7 +54,7 @@ const SecureScreen = ({navigation}: StackScreenProps<{HomeScreen: any}>) => {
       console.log(e);
     }
 
-    navigation.navigate('Login');
+    navigation.navigate('Home');
   };
 
   return (
