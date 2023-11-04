@@ -30,10 +30,14 @@ async function login(req, res) {
     const verify = await vonage.createRequest(parsedPhoneNumber.number)
 
     if (verify.status === 202) {
-      console.log(`login() - ${phone_number} - returning request_id: ${verify.body.request_id}`)
+      console.log(`login() - ${phone_number} - returning request_id: ${verify.body.request_id} check_url: ${verify.body.check_url}`)
       user.update({ vonage_verify_request_id: verify.body.request_id})
 
-      return res.status(200).json({ requestId: verify.body.request_id })
+      return res.status(200).json({ 
+        requestId: verify.body.request_id, 
+        checkUrl: verify.body.check_url
+      })
+      
     } else if (verify.status === 409) {
       console.log(`login() - ${phone_number} - 409 status - ${verify.body.detail}`)
       return res.status(400).json({ error: verify.body.detail })

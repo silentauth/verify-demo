@@ -23,8 +23,13 @@ const VerifyScreen = ({
     }
   }, [pin]);
 
+
   const verifyHandler = async () => {
-    const body = {request_id: route?.params?.requestId, pin: pin};
+    const body = {
+      request_id: route?.params?.requestId,
+      pin: pin,
+    };
+    console.log(`pin in verify from login code: ${pin}`);
     const deviceToken = await getDeviceToken();
     const response = await fetch(`${SERVER_BASE_URL}/verify`, {
       method: 'POST',
@@ -82,7 +87,9 @@ const VerifyScreen = ({
         value={pin}
       />
 
-      <TouchableOpacity onPress={verifyHandler} style={[styles.button, styles.enabledButton]}>
+      <TouchableOpacity
+        onPress={verifyHandler}
+        style={[styles.button, styles.enabledButton]}>
         <Text style={styles.buttonText}>Verify Me!</Text>
       </TouchableOpacity>
     </View>
