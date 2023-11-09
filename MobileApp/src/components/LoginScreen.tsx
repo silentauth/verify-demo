@@ -92,9 +92,10 @@ const LoginScreen = ({
 
       if ('error' in openCheckResponse) {
         setIsLoading(false);
-        setErrorMessage(
-          `Error in openWithDataCellular: ${openCheckResponse.error_description}`,
+        console.log(
+          `Error in openWithDataCellular moving onto VerifyScreen: requestID: ${requestId} `,
         );
+        navigation.navigate('Verify', {requestId: requestId});
       } else if ('http_status' in openCheckResponse) {
         const httpStatus = openCheckResponse.http_status;
         if (httpStatus >= 200) {
